@@ -23,15 +23,17 @@ def main():
     if sign_in_button:
         if register(new_username, new_password):
             st.success("Registration successful! Please log in.")
-            if st.button("Go to Log In page"):
-                st.session_state.page = "login"
-                st.experimental_rerun()
+            st.session_state.page = "login"  # Set the page to 'login'
+            st.experimental_rerun()  # Trigger a rerun to switch pages
         else:
             st.error("Username already exists. Please choose another.")
 
 if __name__ == "__main__":
+    # Initialize session state if it doesn't exist
     if "page" not in st.session_state:
         st.session_state.page = "sign_in"
+    
+    # Determine which page to show
     if st.session_state.page == "sign_in":
         main()
     elif st.session_state.page == "login":
