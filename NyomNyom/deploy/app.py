@@ -99,6 +99,8 @@ if st.session_state.selected_food:
     
     if st.button("Go back"):
         st.session_state.selected_food = None  # Clear the selected food to go back
+        # Instead of calling st.experimental_rerun(), set a flag to trigger the rerun
+        st.session_state.page = 'home'
 else:
     # Create a search bar
     search_term = st.text_input("Search for a food item:")
@@ -129,9 +131,9 @@ else:
                     
                     if st.button(f"More details about {row['Title']}", key=row['Title']):
                         st.session_state.selected_food = row['Title']
-                        st.experimental_rerun()
-        else:
-            st.write("No results found.")
+                        st.session_state.page = 'details'  # Set a flag to trigger the rerun
+
+
 # ans = combined.loc[(combined.C_Type == cuisine) & (combined.Veg_Non == vegn)& (combined.Rating >= val),['Name','C_Type','Veg_Non']]
 # names = ans['Name'].tolist()
 # x = np.array(names)
