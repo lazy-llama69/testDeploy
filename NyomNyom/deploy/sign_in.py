@@ -24,7 +24,7 @@ def main():
         if register(new_username, new_password):
             st.success("Registration successful! Please log in.")
             st.session_state.page = "login"  # Set the page to 'login'
-            st.experimental_rerun()  # Trigger a rerun to switch pages
+            st.rerun()  # Trigger a rerun to switch pages
         else:
             st.error("Username already exists. Please choose another.")
 

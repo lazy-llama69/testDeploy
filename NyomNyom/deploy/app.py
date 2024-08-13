@@ -76,7 +76,7 @@ def main():
                             
                             if st.button(f"More details about {row['Title']}", key=row['Title']):
                                 switch_to_details(row['Title'])  # Switch to the Details view
-                                st.experimental_rerun()  # Force rerun to update the view
+                                st.rerun()  # Force rerun to update the view
 
         else:
             # Details view
@@ -98,12 +98,12 @@ def main():
                 
                 if st.button("Go back"):
                     switch_to_search()  # Switch back to the Search view
-                    st.experimental_rerun()  # Force rerun to update the view
+                    st.rerun()  # Force rerun to update the view
             else:
                 st.error("The selected food item could not be found.")
                 if st.button("Go back"):
                     switch_to_search()
-                    st.experimental_rerun()
+                    st.rerun()
 
 
     # Tab 2: Find a Meal
