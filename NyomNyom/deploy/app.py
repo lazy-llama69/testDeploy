@@ -30,22 +30,16 @@ image_directory = 'input/Food Images'
 # Initialize session state for selected food and view index
 if 'selected_food' not in st.session_state:
     st.session_state.selected_food = None
-if 'current_view' not in st.session_state:
-    st.session_state.current_view = "search"  # Default to the search view
 
 # Define functions to switch views
 def switch_to_details(food_title):
     st.session_state.selected_food = food_title
-    st.session_state.current_view = "details"
-    st.rerun()
 
 def switch_to_search():
     st.session_state.selected_food = None
-    st.session_state.current_view = "search"
-    st.rerun()
 
 # Display the current view
-if st.session_state.current_view == "search":
+if st.session_state.selected_food is None:
     # Search view
     st.subheader("What's your preference?")
     vegn = st.radio("Vegetables or none!", ["veg", "non-veg"], index=1) 
@@ -86,11 +80,14 @@ if st.session_state.current_view == "search":
                     
                     if st.button(f"More details about {row['Title']}", key=row['Title']):
                         switch_to_details(row['Title'])  # Switch to the Details view
+                        st.experimental_rerun()  # Force rerun to update the view
 
-elif st.session_state.current_view == "details":
+else:
     # Details view
-    if st.session_state.selected_food:
-        food_item = food[food['Title'] == st.session_state.selected_food].iloc[0]
+    selected_food_item = food[food['Title'] == st.session_state.selected_food]
+
+    if not selected_food_item.empty:
+        food_item = selected_food_item.iloc[0]
         
         image_path = os.path.join(image_directory, food_item['Image_Name'] + '.jpg')
         
@@ -105,7 +102,12 @@ elif st.session_state.current_view == "details":
         
         if st.button("Go back"):
             switch_to_search()  # Switch back to the Search view
-
+            st.experimental_rerun()  # Force rerun to update the view
+    else:
+        st.error("The selected food item could not be found.")
+        if st.button("Go back"):
+            switch_to_search()
+            st.experimental_rerun()
 ##### IMPLEMENTING RECOMMENDER ######
 # dataset = ratings.pivot_table(index='Food_ID', columns='User_ID', values='Rating')
 # dataset.fillna(0, inplace=True)
