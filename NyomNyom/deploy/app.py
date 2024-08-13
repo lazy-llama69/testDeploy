@@ -11,7 +11,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 from urllib.parse import urlencode
 import os
 
-st.title("Welcome to Nyom Nyom!")
+tab1, tab2, tab3 = st.tabs(["Home", "Random", "Favourites"])
+
+tab1.title("Welcome to Nyom Nyom! 🤤 ")
 st.text("Let us help you decide what to eat today")
 
 # Load the food and ratings data only once and store them in session state
@@ -40,16 +42,7 @@ def switch_to_search():
 
 # Display the current view
 if st.session_state.selected_food is None:
-    # Search view
-    st.subheader("What's your preference?")
-    vegn = st.radio("Vegetables or none!", ["veg", "non-veg"], index=1) 
 
-    st.subheader("What Cuisine do you prefer?")
-    cuisine = st.selectbox("Choose your favourite!", ['Healthy Food', 'Snack', 'Dessert', 'Japanese', 'Indian', 'French',
-           'Mexican', 'Italian', 'Chinese', 'Beverage', 'Thai'])
-
-    st.subheader("How well do you want the dish to be?")  # RATING
-    val = st.slider("from poor to the best!", 0, 10)
 
     # Create a search bar
     search_term = st.text_input("Search for a food item:")
