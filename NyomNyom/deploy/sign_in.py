@@ -14,11 +14,11 @@ def register(username, password):
     return True
 
 def main():
-    st.title("Sign In")
+    st.title("Sign Up")
 
     new_username = st.text_input("New Username")
     new_password = st.text_input("New Password", type="password")
-    sign_in_button = st.button("Sign in")
+    sign_in_button = st.button("Register")
 
     if sign_in_button:
         if register(new_username, new_password):
