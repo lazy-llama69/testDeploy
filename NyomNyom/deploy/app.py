@@ -76,10 +76,9 @@ def main():
                                 st.image(image_path, use_column_width=True)
                             else:
                                 st.error(f"Image not found: {row['Image_Name']}")
-                            
-                            st.markdown(f"**{row['Title'].strip()}**")
-                            
-                            if st.button(f"More details", key=row['Title']):
+                                                        
+                            # Clickable food title
+                            if st.button(row['Title'], key=row['Title']):
                                 switch_to_details(row['Title'])  # Switch to the Details view
                                 st.rerun()  # Force rerun to update the view
 
@@ -237,15 +236,22 @@ def main():
                         with cols[i]:
                             # Construct the full image path with extension
                             image_path = os.path.join(image_directory, row['Image_Name'] + '.jpg')
-
+                            
                             if os.path.exists(image_path):
                                 st.image(image_path, use_column_width=True)
                             else:
                                 st.error(f"Image not found: {row['Image_Name']}")
-
+                            
+                            # Create three columns to center-align the button
+                            st.markdown("<div style='display: flex; justify-content: center;'>", unsafe_allow_html=True)
+                            
                             if st.button(row['Title'], key=row['Title']):
-                                st.session_state.selected_favorite = row['Title']
+                                switch_to_details(row['Title'])  # Switch to the Details view
                                 st.rerun()  # Force rerun to update the view
+                            
+                            st.markdown("</div>", unsafe_allow_html=True)
+
+
             else:
                 st.warning("You don't have any favorites yet.")
         else:
