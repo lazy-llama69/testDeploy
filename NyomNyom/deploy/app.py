@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 import os
 import pymongo
 import random 
+import time 
 
 
 client = pymongo.MongoClient("mongodb+srv://tjsdylan0:kzQPOHODZ95Z6fIh@cluster0.1kbkoif.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
@@ -137,7 +138,7 @@ def main():
                     if st.session_state['logged_in_user']:
                         username = st.session_state['logged_in_user']
                         add_to_favorites(username, food_item['Title'])
-                        st.success(f"{food_item['Title']} has been added to your favorites!")
+                        st.success(f"{food_item['Title']} has been added to your favorites! 😉")
 
                 if st.button("Go back"):
                     switch_to_search()  # Switch back to the Search view
@@ -193,7 +194,7 @@ def main():
                 if st.session_state['logged_in_user']:
                     username = st.session_state['logged_in_user']
                     add_to_favorites(username, random_meal['Title'])
-                    st.success(f"{random_meal['Title']} has been added to your favorites!")
+                    st.success(f"{random_meal['Title']} has been added to your favorites! 😉")
         
         # Check if the user pressed Enter in the text_input and the button was not clicked
         if ingredients_input and not random_button_clicked:
@@ -226,7 +227,7 @@ def main():
                     if st.session_state['logged_in_user']:
                         username = st.session_state['logged_in_user']
                         add_to_favorites(username, random_meal['Title'])
-                        st.success(f"{random_meal['Title']} has been added to your favorites!")
+                        st.success(f"{random_meal['Title']} has been added to your favorites! 😉")
 
             else:
                 st.warning("No meals found with the given ingredients.")
@@ -269,6 +270,15 @@ def main():
                         st.markdown(f"## {food_item['Title']}")
                         st.markdown(f"**Ingredients:** {food_item['Ingredients']}")
                         st.markdown(f"**Instructions:** {food_item['Instructions']}")
+
+                        # Add a "Remove from Favorites" button
+                        if st.button("Remove from Favorites 💔"):
+                            remove_from_favorites(username, food_item['Title'])
+                            st.success(f"{food_item['Title']} has been removed from your favorites! 🥹")
+                            # Delay to allow the success message to appear
+                            time.sleep(2)  # Delay for 2 seconds
+                            st.session_state.selected_favorite = None  # Reset the selected favorite
+                            st.rerun()  # Rerun to update the view
 
                         if st.button("Back to Favorites"):
                             st.session_state.selected_favorite = None  # Reset the selected favorite
@@ -317,6 +327,13 @@ def add_to_favorites(username, food_title):
     collection.update_one(
         {"username": username},
         {"$addToSet": {"favorites": food_title}}  # $addToSet ensures no duplicates
+    )
+
+def remove_from_favorites(username, food_title):
+    """Remove a food item from the user's favorites in MongoDB."""
+    collection.update_one(
+        {"username": username},
+        {"$pull": {"favorites": food_title}}  # $pull removes the item from the array
     )
 
 
