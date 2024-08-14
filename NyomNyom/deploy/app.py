@@ -11,6 +11,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from urllib.parse import urlencode
 import os
 import pymongo
+import random
 
 client = pymongo.MongoClient("mongodb+srv://tjsdylan0:kzQPOHODZ95Z6fIh@cluster0.1kbkoif.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["NyomNyom"]
@@ -119,6 +120,48 @@ def main():
                 if st.button("Go back"):
                     switch_to_search()
                     st.rerun()
+                    
+        st.header("Recommended Meals Based on Your Favorites")
+
+
+    # Show the recommended meals 
+    username = st.session_state.get('username', None)
+
+    if username:
+        # Fetch the user's favorites from the MongoDB collection
+        user = collection.find_one({"username": username})
+        favorite_titles = user.get("favorites", [])
+
+        # Generate recommendations based on the user's favorite meals
+        recommendations = food_recommendation(st.session_state.food_data, favorite_titles, top_n=5)
+
+        if recommendations:
+            N_cards_per_row = 3  # Number of cards per row
+
+            for n_row, rec_title in enumerate(recommendations):
+                # Get the food item details
+                recommended_food_item = st.session_state.food_data[st.session_state.food_data['Title'] == rec_title].iloc[0]
+
+                # Construct the full image path with extension
+                image_path = os.path.join(image_directory, recommended_food_item['Image_Name'] + '.jpg')
+
+                i = n_row % N_cards_per_row
+                if i == 0:
+                    st.write("---")
+                    cols = st.columns(N_cards_per_row, gap="large")
+
+                with cols[i]:
+                    if os.path.exists(image_path):
+                        st.image(image_path, use_column_width=True)
+                    else:
+                        st.error(f"Image not found: {recommended_food_item['Image_Name']}")
+
+                    st.markdown(f"**{recommended_food_item['Title']}**")
+        else:
+            st.info("No new recommendations available.")
+    else:
+        st.warning("Please log in to see recommendations.")
+
 
 
     # Tab 2: Find a Meal
@@ -186,7 +229,7 @@ def main():
 
 
     with tab3:
-        st.header("Your Favorite Meals 🩷 ")
+        st.title("Your Favorite Meals 🩷 ")
         username = st.session_state.get('username', None)  # Get the logged-in username
         
         # Retrieve the user's favorite meals from MongoDB
@@ -270,52 +313,53 @@ def add_to_favorites(username, food_title):
 
 
 
-if __name__ == "__main__":
-    main()
-##### IMPLEMENTING RECOMMENDER ######
-# dataset = ratings.pivot_table(index='Food_ID', columns='User_ID', values='Rating')
-# dataset.fillna(0, inplace=True)
-# csr_dataset = csr_matrix(dataset.values)
-# dataset.reset_index(inplace=True)
+def food_recommendation(food, favorite_titles=None, top_n=9):
+    # Drop rows with any NaN values
+    food.dropna(inplace=True)
 
-# model = NearestNeighbors(metric='cosine', algorithm='brute', n_neighbors=20, n_jobs=-1)
-# model.fit(csr_dataset)
+    # Combine features into a single string
+    food['combined_features'] = food['Title'] + " " + food['Ingredients']
 
-# def food_recommendation(food, food_title, top_n=5):
+    # Create TF-IDF matrix
+    tfidf = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = tfidf.fit_transform(food['combined_features'])
 
-#     # Drop rows with any NaN values
-#     food.dropna(inplace=True)
+    # Compute cosine similarity matrix
+    cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
 
-#     # Combine features into a single string
-#     food['combined_features'] = food['Title'] + " " + food['Ingredients']
+    # If no favorite titles, randomly select one food item
+    if not favorite_titles:
+        random_title = random.choice(food['Title'].tolist())
+        favorite_titles = [random_title]
+        st.info(f"Since you have no favorites, we're recommending based on: **{random_title}**")
 
-#     # Create TF-IDF matrix
-#     tfidf = TfidfVectorizer(stop_words='english')
-#     tfidf_matrix = tfidf.fit_transform(food['combined_features'])
+    # List to hold all recommendations
+    all_recommendations = []
 
-#     # Compute cosine similarity matrix
-#     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
+    for food_title in favorite_titles:
+        # Get the index of the food item that matches the given title
+        food_index = food[food['Title'] == food_title].index
 
-#     # Get the index of the food item that matches the given title
-#     food_index = food[food['Title'] == food_title].index
+        if food_index.empty:
+            print(f"No food item found with the title: {food_title}")
+            continue
 
-#     if food_index.empty:
-#         print(f"No food item found with the title: {food_title}")
-#         return pd.Series(dtype=str)
+        # Get similarity scores for all foods with that item
+        similarity_scores = list(enumerate(cosine_sim[food_index[0]]))
 
-#     # Get similarity scores for all foods with that item
-#     similarity_scores = list(enumerate(cosine_sim[food_index[0]]))
+        # Sort foods by similarity score
+        similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
 
-#     # Sort foods by similarity score
-#     similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
+        # Get top N most similar food indices, excluding the first item (itself)
+        top_food_indices = [i[0] for i in similarity_scores if i[0] != food_index[0]][:top_n]
 
-#     # Get top N most similar food indices, excluding the first item (itself)
-#     top_food_indices = [i[0] for i in similarity_scores if i[0] != food_index[0]][:top_n]
+        # Add recommended food titles to the list
+        recommendations = food['Title'].iloc[top_food_indices]
+        all_recommendations.extend(recommendations)
 
-#     # Return the recommended food titles
-#     recommendations = food['Title'].iloc[top_food_indices]
-#     return recommendations
+    # Filter out any meals that are already in the favorites list
+    all_recommendations = [rec for rec in all_recommendations if rec not in favorite_titles]
 
-# recommendations = food_recommendation(food, 'Shrimp Creole', top_n=5)
-# recommendations = recommendations[1:6]
-# names1 = recommendations.tolist()
+    # Return the top N unique recommendations
+    unique_recommendations = pd.Series(all_recommendations).value_counts().index.tolist()
+    return unique_recommendations[:top_n]
