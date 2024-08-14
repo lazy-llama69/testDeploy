@@ -13,6 +13,7 @@ import os
 import pymongo
 import random 
 
+
 client = pymongo.MongoClient("mongodb+srv://tjsdylan0:kzQPOHODZ95Z6fIh@cluster0.1kbkoif.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["NyomNyom"]
 collection = db["User"]
@@ -29,7 +30,7 @@ def main():
         if 'food_data' not in st.session_state:
             st.session_state.food_data = pd.read_csv("input/recipes.csv")
             st.session_state.food_data.dropna(inplace=True)
-            
+
         food = st.session_state.food_data
 
         # Directory where images are stored
@@ -106,12 +107,6 @@ def main():
                         else:
                             st.error(f"Image not found: {recommended_food_item['Image_Name']}")
 
-                        st.markdown(f"**{recommended_food_item['Title']}**")
-            else:
-                st.info("No new recommendations available.")
-        else:
-            st.warning("Please log in to see recommendations.")
-
     # Tab 2: Find a Meal
     with tab2:
         st.header("Find a Random Meal Based on Your Ingredients ")
@@ -177,7 +172,7 @@ def main():
 
 
     with tab3:
-        st.header("Your Favorite Meals 🩷 ")
+        st.title("Your Favorite Meals 🩷 ")
         username = st.session_state.get('username', None)  # Get the logged-in username
         
         # Retrieve the user's favorite meals from MongoDB
