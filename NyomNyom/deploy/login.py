@@ -18,7 +18,8 @@ def authenticate(username, password):
     return False
 
 def login_page():
-    st.title("Log In")
+    st.title("Welcome to Nyom Nyom! 🤤 ")
+    st.header("Log In")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")

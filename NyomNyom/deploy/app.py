@@ -21,8 +21,8 @@ def main():
     tab1, tab2, tab3 = st.tabs(["Home", "Random", "Favourites"])
 
     with tab1:
-        st.title("Welcome to Nyom Nyom! 🤤 ")
-        st.text("Let us help you decide what to eat today")
+        username = st.session_state.get('username', None)
+        st.title("Welcome back " + username + " 👋🏻")
 
         # Load the food and ratings data only once and store them in session state
         if 'food_data' not in st.session_state:
@@ -53,6 +53,9 @@ def main():
 
 
             # Create a search bar
+            st.subheader("What do you feel like eating today? 🍴")
+            st.subheader("🍔 🍜 🍱 🌮 🥟 🍣 🥞 🧋 🍰 🥐 🥗 🍲 🍛")
+
             search_term = st.text_input("Search for a food item:")
 
             # Display results only if a search term is entered
@@ -101,11 +104,11 @@ def main():
                 st.markdown(f"**Instructions:** {food_item['Instructions']}")
 
                 # Add to Favorites Button
-                if st.button("Add to Favorites"):
+                if st.button("Add to Favorites 🩷"):
                     if st.session_state['logged_in_user']:
                         username = st.session_state['logged_in_user']
                         add_to_favorites(username, food_item['Title'])
-                        st.success(f"{food_item['Title']} has been added to your favorites!")
+                        st.success(f"{food_item['Title']} has been added to your favorites! 🩷")
 
                 
                 if st.button("Go back"):
@@ -120,7 +123,8 @@ def main():
 
     # Tab 2: Find a Meal
     with tab2:
-        st.header("Find a Meal Based on Your Ingredients")
+        st.header("Find a Random Meal Based on Your Ingredients ")
+        st.subheader("🥕 🍅 🥑 🌶️ 🧅 🧄 🫚 🌽 🍗 🥩 🥚 🥒 🦐 🥦 🍋 🥓 🧀")
         
         # Input bar for ingredients
         ingredients_input = st.text_input(
@@ -182,12 +186,12 @@ def main():
 
 
     with tab3:
-        st.header("Your Favorite Meals")
-        username = st.session_state['username']  # Get the logged-in username
+        st.header("Your Favorite Meals 🩷 ")
+        username = st.session_state.get('username', None)  # Get the logged-in username
         
         # Retrieve the user's favorite meals from MongoDB
-        user = collection.find_one({"username": username})
-        favorites = user.get("favorites", [])
+        user = collection.find_one({"username": username}) if username else None
+        favorites = user.get("favorites", []) if user else []
 
         if favorites:
             # Load the food data
@@ -200,12 +204,11 @@ def main():
                 N_cards_per_row = 3  # Number of cards per row
 
                 # Check if a specific food is selected to show details
-                if 'selected_favorite' not in st.session_state:
-                    st.session_state.selected_favorite = None
+                selected_favorite = st.session_state.get('selected_favorite', None)
 
-                if st.session_state.selected_favorite:
+                if selected_favorite:
                     # Show the details of the selected food
-                    selected_food_item = food[food['Title'] == st.session_state.selected_favorite]
+                    selected_food_item = food[food['Title'] == selected_favorite]
 
                     if not selected_food_item.empty:
                         food_item = selected_food_item.iloc[0]
@@ -221,10 +224,8 @@ def main():
                         st.markdown(f"**Instructions:** {food_item['Instructions']}")
 
                         if st.button("Back to Favorites"):
-                            st.session_state.selected_favorite = None
-                            st.rerun()
-                    else:
-                        st.error("The selected food item could not be found.")
+                            st.session_state.selected_favorite = None  # Reset the selected favorite
+                            st.rerun()  # Rerun to update the view
                 else:
                     # Display the list of favorite foods
                     for n_row, row in favorite_foods.reset_index().iterrows():
@@ -241,21 +242,20 @@ def main():
                                 st.image(image_path, use_column_width=True)
                             else:
                                 st.error(f"Image not found: {row['Image_Name']}")
-                            
-                            # Create three columns to center-align the button
+
+                            # Create a centered button for the title
                             st.markdown("<div style='display: flex; justify-content: center;'>", unsafe_allow_html=True)
                             
                             if st.button(row['Title'], key=row['Title']):
-                                switch_to_details(row['Title'])  # Switch to the Details view
-                                st.rerun()  # Force rerun to update the view
+                                st.session_state.selected_favorite = row['Title']  # Store the selected title
+                                st.rerun()  # Rerun to update the view
                             
                             st.markdown("</div>", unsafe_allow_html=True)
-
-
             else:
                 st.warning("You don't have any favorites yet.")
         else:
             st.warning("You don't have any favorites yet.")
+
 
 
 def add_to_favorites(username, food_title):

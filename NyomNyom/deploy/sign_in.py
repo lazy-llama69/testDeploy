@@ -28,7 +28,8 @@ def register(username, password):
     return True
 
 def main():
-    st.title("Sign Up")
+    st.title("Welcome to Nyom Nyom! 🤤 ")
+    st.header("Sign Up")
 
     new_username = st.text_input("New Username")
     new_password = st.text_input("New Password", type="password")
