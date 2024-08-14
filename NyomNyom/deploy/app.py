@@ -44,11 +44,12 @@ def main():
         def switch_to_details(food_title):
             st.session_state.selected_food = food_title
 
+        def switch_to_search():
+            st.session_state.selected_food = None
+
         # Display the current view
         if st.session_state.selected_food is None:
-
-
-            # Create a search bar
+            # Search and recommendation view
             st.subheader("What do you feel like eating today? 🍴")
             st.subheader("🍔 🍜 🍱 🌮 🥟 🍣 🥞 🧋 🍰 🥐 🥗 🍲 🍛")
 
@@ -66,46 +67,91 @@ def main():
                         if i == 0:
                             st.write("---")
                             cols = st.columns(N_cards_per_row, gap="large")
-                        
+
                         with cols[i]:
                             # Construct the full image path with extension
                             image_path = os.path.join(image_directory, row['Image_Name'] + '.jpg')
-                            
+
                             if os.path.exists(image_path):
                                 st.image(image_path, use_column_width=True)
                             else:
                                 st.error(f"Image not found: {row['Image_Name']}")
-                                                        
+
+                            st.markdown(f"**{row['Title'].strip()}**")
+
                             # Clickable food title
                             if st.button(row['Title'], key=row['Title']):
                                 switch_to_details(row['Title'])  # Switch to the Details view
                                 st.rerun()  # Force rerun to update the view
 
-        # Display recommendations below the search bar
-        st.subheader("Recommended Meals Based on Your Favorites")
+            # Display recommendations below the search bar
+            st.subheader("Recommended Meals Based on Your Favorites")
 
-        if username:
-            user = collection.find_one({"username": username})
-            favorite_titles = user.get("favorites", [])
+            if username:
+                user = collection.find_one({"username": username})
+                favorite_titles = user.get("favorites", [])
 
-            recommendations = food_recommendation_from_precomputed(food, favorite_titles, top_n=9)
+                recommendations = food_recommendation_from_precomputed(food, favorite_titles, top_n=9)
 
-            if recommendations:
-                N_cards_per_row = 3  # Number of cards per row
-                for n_row, rec_title in enumerate(recommendations):
-                    recommended_food_item = food[food['Title'] == rec_title].iloc[0]
-                    image_path = os.path.join(image_directory, recommended_food_item['Image_Name'] + '.jpg')
+                if recommendations:
+                    N_cards_per_row = 3  # Number of cards per row
+                    for n_row, rec_title in enumerate(recommendations):
+                        recommended_food_item = food[food['Title'] == rec_title].iloc[0]
+                        image_path = os.path.join(image_directory, recommended_food_item['Image_Name'] + '.jpg')
 
-                    i = n_row % N_cards_per_row
-                    if i == 0:
-                        st.write("---")
-                        cols = st.columns(N_cards_per_row, gap="large")
+                        i = n_row % N_cards_per_row
+                        if i == 0:
+                            st.write("---")
+                            cols = st.columns(N_cards_per_row, gap="large")
 
-                    with cols[i]:
-                        if os.path.exists(image_path):
-                            st.image(image_path, use_column_width=True)
-                        else:
-                            st.error(f"Image not found: {recommended_food_item['Image_Name']}")
+                        with cols[i]:
+                            if os.path.exists(image_path):
+                                st.image(image_path, use_column_width=True)
+                            else:
+                                st.error(f"Image not found: {recommended_food_item['Image_Name']}")
+
+                            # Clickable food title
+                            if st.button(rec_title, key=rec_title):
+                                switch_to_details(rec_title)  # Switch to the Details view
+                                st.rerun()  # Trigger a rerun to update the view
+
+        else:
+            # Unified Details view
+            selected_food_item = food[food['Title'] == st.session_state.selected_food]
+            if not selected_food_item.empty:
+                food_item = selected_food_item.iloc[0]
+
+                image_path = os.path.join(image_directory, food_item['Image_Name'] + '.jpg')
+
+                if os.path.exists(image_path):
+                    st.image(image_path, use_column_width=True)
+                else:
+                    st.error(f"Image not found: {image_path}")
+
+                st.markdown(f"## {food_item['Title']}")
+                st.markdown(f"**Ingredients:** {food_item['Ingredients']}")
+                st.markdown(f"**Instructions:** {food_item['Instructions']}")
+
+                # Add to Favorites Button
+                if st.button("Add to Favorites 🩷"):
+                    if st.session_state['logged_in_user']:
+                        username = st.session_state['logged_in_user']
+                        add_to_favorites(username, food_item['Title'])
+                        st.success(f"{food_item['Title']} has been added to your favorites!")
+
+                if st.button("Go back"):
+                    switch_to_search()  # Switch back to the Search view
+                    st.rerun()  # Force rerun to update the view
+            else:
+                st.error("The selected food item could not be found.")
+                if st.button("Go back"):
+                    switch_to_search()
+                    st.rerun()
+
+
+
+
+
 
     # Tab 2: Find a Meal
     with tab2:
@@ -141,6 +187,13 @@ def main():
             
             st.markdown(f"**Ingredients:** {random_meal['Ingredients']}")
             st.markdown(f"**Instructions:** {random_meal['Instructions']}")
+
+             # Add to Favorites Button
+            if st.button("Add to Favorites 🩷"):
+                if st.session_state['logged_in_user']:
+                    username = st.session_state['logged_in_user']
+                    add_to_favorites(username, random_meal['Title'])
+                    st.success(f"{random_meal['Title']} has been added to your favorites!")
         
         # Check if the user pressed Enter in the text_input and the button was not clicked
         if ingredients_input and not random_button_clicked:
@@ -167,6 +220,14 @@ def main():
                 
                 st.markdown(f"**Ingredients:** {random_meal['Ingredients']}")
                 st.markdown(f"**Instructions:** {random_meal['Instructions']}")
+
+                 # Add to Favorites Button
+                if st.button("Add to Favorites 🩷"):
+                    if st.session_state['logged_in_user']:
+                        username = st.session_state['logged_in_user']
+                        add_to_favorites(username, random_meal['Title'])
+                        st.success(f"{random_meal['Title']} has been added to your favorites!")
+
             else:
                 st.warning("No meals found with the given ingredients.")
 
@@ -242,6 +303,12 @@ def main():
         else:
             st.warning("You don't have any favorites yet.")
 
+
+def switch_to_details(food_title):
+    st.session_state.selected_food = food_title
+
+def switch_to_search():
+    st.session_state.selected_food = None
 
 
 def add_to_favorites(username, food_title):
