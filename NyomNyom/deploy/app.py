@@ -30,9 +30,6 @@ def main():
             st.session_state.food_data = pd.read_csv("input/recipes.csv")
             st.session_state.food_data.dropna(inplace=True)
 
-        if 'ratings_data' not in st.session_state:
-            st.session_state.ratings_data = pd.read_csv("input/ratings.csv")
-
         food = st.session_state.food_data
 
         # Directory where images are stored
@@ -120,47 +117,47 @@ def main():
                 if st.button("Go back"):
                     switch_to_search()
                     st.rerun()
-                    
-        st.header("Recommended Meals Based on Your Favorites")
+
+        st.subheader("Recommended Meals Based on Your Favorites")
 
 
-    # Show the recommended meals 
-    username = st.session_state.get('username', None)
+        # Show the recommended meals 
+        username = st.session_state.get('username', None)
 
-    if username:
-        # Fetch the user's favorites from the MongoDB collection
-        user = collection.find_one({"username": username})
-        favorite_titles = user.get("favorites", [])
+        if username:
+            # Fetch the user's favorites from the MongoDB collection
+            user = collection.find_one({"username": username})
+            favorite_titles = user.get("favorites", [])
 
-        # Generate recommendations based on the user's favorite meals
-        recommendations = food_recommendation(st.session_state.food_data, favorite_titles, top_n=5)
+            # Generate recommendations based on the user's favorite meals
+            recommendations = food_recommendation(st.session_state.food_data, favorite_titles, top_n=5)
 
-        if recommendations:
-            N_cards_per_row = 3  # Number of cards per row
+            if recommendations:
+                N_cards_per_row = 3  # Number of cards per row
 
-            for n_row, rec_title in enumerate(recommendations):
-                # Get the food item details
-                recommended_food_item = st.session_state.food_data[st.session_state.food_data['Title'] == rec_title].iloc[0]
+                for n_row, rec_title in enumerate(recommendations):
+                    # Get the food item details
+                    recommended_food_item = st.session_state.food_data[st.session_state.food_data['Title'] == rec_title].iloc[0]
 
-                # Construct the full image path with extension
-                image_path = os.path.join(image_directory, recommended_food_item['Image_Name'] + '.jpg')
+                    # Construct the full image path with extension
+                    image_path = os.path.join(image_directory, recommended_food_item['Image_Name'] + '.jpg')
 
-                i = n_row % N_cards_per_row
-                if i == 0:
-                    st.write("---")
-                    cols = st.columns(N_cards_per_row, gap="large")
+                    i = n_row % N_cards_per_row
+                    if i == 0:
+                        st.write("---")
+                        cols = st.columns(N_cards_per_row, gap="large")
 
-                with cols[i]:
-                    if os.path.exists(image_path):
-                        st.image(image_path, use_column_width=True)
-                    else:
-                        st.error(f"Image not found: {recommended_food_item['Image_Name']}")
+                    with cols[i]:
+                        if os.path.exists(image_path):
+                            st.image(image_path, use_column_width=True)
+                        else:
+                            st.error(f"Image not found: {recommended_food_item['Image_Name']}")
 
-                    st.markdown(f"**{recommended_food_item['Title']}**")
+                        st.markdown(f"**{recommended_food_item['Title']}**")
+            else:
+                st.info("No new recommendations available.")
         else:
-            st.info("No new recommendations available.")
-    else:
-        st.warning("Please log in to see recommendations.")
+            st.warning("Please log in to see recommendations.")
 
 
 
@@ -362,4 +359,4 @@ def food_recommendation(food, favorite_titles=None, top_n=9):
 
     # Return the top N unique recommendations
     unique_recommendations = pd.Series(all_recommendations).value_counts().index.tolist()
-    return unique_recommendations[:top_n]
+    return unique_recommendations[:9]
