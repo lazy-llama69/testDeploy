@@ -11,6 +11,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from urllib.parse import urlencode
 import os
 import pymongo
+import random 
 
 client = pymongo.MongoClient("mongodb+srv://tjsdylan0:kzQPOHODZ95Z6fIh@cluster0.1kbkoif.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["NyomNyom"]
@@ -28,10 +29,7 @@ def main():
         if 'food_data' not in st.session_state:
             st.session_state.food_data = pd.read_csv("input/recipes.csv")
             st.session_state.food_data.dropna(inplace=True)
-
-        if 'ratings_data' not in st.session_state:
-            st.session_state.ratings_data = pd.read_csv("input/ratings.csv")
-
+            
         food = st.session_state.food_data
 
         # Directory where images are stored
@@ -44,9 +42,6 @@ def main():
         # Define functions to switch views
         def switch_to_details(food_title):
             st.session_state.selected_food = food_title
-
-        def switch_to_search():
-            st.session_state.selected_food = None
 
         # Display the current view
         if st.session_state.selected_food is None:
@@ -85,41 +80,37 @@ def main():
                                 switch_to_details(row['Title'])  # Switch to the Details view
                                 st.rerun()  # Force rerun to update the view
 
-        else:
-            # Details view
-            selected_food_item = food[food['Title'] == st.session_state.selected_food]
+        # Display recommendations below the search bar
+        st.subheader("Recommended Meals Based on Your Favorites")
 
-            if not selected_food_item.empty:
-                food_item = selected_food_item.iloc[0]
-                
-                image_path = os.path.join(image_directory, food_item['Image_Name'] + '.jpg')
-                
-                if os.path.exists(image_path):
-                    st.image(image_path, use_column_width=True)
-                else:
-                    st.error(f"Image not found: {image_path}")
-                
-                st.markdown(f"## {food_item['Title']}")
-                st.markdown(f"**Ingredients:** {food_item['Ingredients']}")
-                st.markdown(f"**Instructions:** {food_item['Instructions']}")
+        if username:
+            user = collection.find_one({"username": username})
+            favorite_titles = user.get("favorites", [])
 
-                # Add to Favorites Button
-                if st.button("Add to Favorites 🩷"):
-                    if st.session_state['logged_in_user']:
-                        username = st.session_state['logged_in_user']
-                        add_to_favorites(username, food_item['Title'])
-                        st.success(f"{food_item['Title']} has been added to your favorites! 🩷")
+            recommendations = food_recommendation_from_precomputed(food, favorite_titles, top_n=9)
 
-                
-                if st.button("Go back"):
-                    switch_to_search()  # Switch back to the Search view
-                    st.rerun()  # Force rerun to update the view
+            if recommendations:
+                N_cards_per_row = 3  # Number of cards per row
+                for n_row, rec_title in enumerate(recommendations):
+                    recommended_food_item = food[food['Title'] == rec_title].iloc[0]
+                    image_path = os.path.join(image_directory, recommended_food_item['Image_Name'] + '.jpg')
+
+                    i = n_row % N_cards_per_row
+                    if i == 0:
+                        st.write("---")
+                        cols = st.columns(N_cards_per_row, gap="large")
+
+                    with cols[i]:
+                        if os.path.exists(image_path):
+                            st.image(image_path, use_column_width=True)
+                        else:
+                            st.error(f"Image not found: {recommended_food_item['Image_Name']}")
+
+                        st.markdown(f"**{recommended_food_item['Title']}**")
             else:
-                st.error("The selected food item could not be found.")
-                if st.button("Go back"):
-                    switch_to_search()
-                    st.rerun()
-
+                st.info("No new recommendations available.")
+        else:
+            st.warning("Please log in to see recommendations.")
 
     # Tab 2: Find a Meal
     with tab2:
@@ -267,60 +258,20 @@ def add_to_favorites(username, food_title):
     )
 
 
+import json
+def load_precomputed_recommendations():
+    with open("precomputed_recommendations.json", "r") as f:
+        return json.load(f)
 
+precomputed_recommendations = load_precomputed_recommendations()
 
-
-if __name__ == "__main__":
-    main()
-##### IMPLEMENTING RECOMMENDER ######
-def food_recommendation(food, favorite_titles=None, top_n=9):
-    # Drop rows with any NaN values
-    food.dropna(inplace=True)
-
-    # Combine features into a single string
-    food['combined_features'] = food['Title'] + " " + food['Ingredients']
-
-    # Create TF-IDF matrix
-    tfidf = TfidfVectorizer(stop_words='english')
-    tfidf_matrix = tfidf.fit_transform(food['combined_features'])
-
-    # Compute cosine similarity matrix
-    cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
-
-    # If no favorite titles, randomly select one food item
-    if not favorite_titles:
-        random_title = random.choice(food['Title'].tolist())
-        favorite_titles = [random_title]
-        st.info(f"Since you have no favorites, we're recommending based on: **{random_title}**")
-
-    # List to hold all recommendations
+def food_recommendation_from_precomputed(food, favorite_titles=None, top_n=9):
     all_recommendations = []
 
     for food_title in favorite_titles:
-        # Get the index of the food item that matches the given title
-        food_index = food[food['Title'] == food_title].index
+        if food_title in precomputed_recommendations:
+            all_recommendations.extend(precomputed_recommendations[food_title])
 
-        if food_index.empty:
-            print(f"No food item found with the title: {food_title}")
-            continue
-
-        # Get similarity scores for all foods with that item
-        similarity_scores = list(enumerate(cosine_sim[food_index[0]]))
-
-        # Sort foods by similarity score
-        similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
-
-        # Get top N most similar food indices, excluding the first item (itself)
-        top_food_indices = [i[0] for i in similarity_scores if i[0] != food_index[0]][:top_n]
-
-        # Add recommended food titles to the list
-        recommendations = food['Title'].iloc[top_food_indices]
-        all_recommendations.extend(recommendations)
-
-    # Filter out any meals that are already in the favorites list
     all_recommendations = [rec for rec in all_recommendations if rec not in favorite_titles]
-
-    # Return the top N unique recommendations
     unique_recommendations = pd.Series(all_recommendations).value_counts().index.tolist()
-    return unique_recommendations[:9]
-
+    return unique_recommendations[:top_n]
