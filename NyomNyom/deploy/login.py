@@ -1,16 +1,20 @@
 import streamlit as st
 import pandas as pd 
 import os
+import pymongo
 
 # Example credentials (in-memory for simplicity)
-CREDENTIALS = {
-    "u": "u",
-    "user2": "password2"
-}
+client = pymongo.MongoClient("mongodb+srv://tjsdylan0:kzQPOHODZ95Z6fIh@cluster0.1kbkoif.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+db = client["NyomNyom"]
+collection = db["User"]
+
 
 def authenticate(username, password):
-    """Check if the provided username and password match any in the credentials."""
-    return CREDENTIALS.get(username) == password
+    """Check if the provided username and password match any in the MongoDB collection."""
+    user = collection.find_one({"username": username, "password": password})
+    if user:
+        return True
+    return False
 
 def login_page():
     st.title("Log In")
@@ -49,3 +53,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

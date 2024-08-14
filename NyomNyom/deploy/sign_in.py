@@ -12,10 +12,19 @@ db = client["NyomNyom"]
 collection = db["User"]
 
 def register(username, password):
-    """Register a new user by adding their credentials to the store."""
-    if username in CREDENTIALS:
+    """Register a new user by adding their credentials to MongoDB."""
+    # Check if the username already exists in the database
+    if collection.find_one({"username": username}):
         return False  # User already exists
-    CREDENTIALS[username] = password
+    
+    # If the username is unique, insert the new user into the collection
+    user_data = {
+        "username": username,
+        "password": password,  # Note: In a real application, passwords should be hashed
+        "meals_eaten": [],  # Initialize with an empty list
+        "favorites": []     #Intialize a favorites empty list
+    }
+    collection.insert_one(user_data)
     return True
 
 def main():
@@ -44,5 +53,3 @@ if __name__ == "__main__":
     elif st.session_state.page == "login":
         import login
         login.main()
-
-client.close()
