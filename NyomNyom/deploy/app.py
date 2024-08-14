@@ -10,6 +10,11 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from urllib.parse import urlencode
 import os
+import pymongo
+
+client = pymongo.MongoClient("mongodb+srv://tjsdylan0:kzQPOHODZ95Z6fIh@cluster0.1kbkoif.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+db = client["NyomNyom"]
+collection = db["User"]
 
 def main():
 
@@ -95,6 +100,14 @@ def main():
                 st.markdown(f"## {food_item['Title']}")
                 st.markdown(f"**Ingredients:** {food_item['Ingredients']}")
                 st.markdown(f"**Instructions:** {food_item['Instructions']}")
+
+                # Add to Favorites Button
+                if st.button("Add to Favorites"):
+                    if st.session_state['logged_in_user']:
+                        username = st.session_state['logged_in_user']
+                        add_to_favorites(username, food_item['Title'])
+                        st.success(f"{food_item['Title']} has been added to your favorites!")
+
                 
                 if st.button("Go back"):
                     switch_to_search()  # Switch back to the Search view
@@ -167,6 +180,18 @@ def main():
                 st.markdown(f"**Instructions:** {random_meal['Instructions']}")
             else:
                 st.warning("No meals found with the given ingredients.")
+
+
+
+
+def add_to_favorites(username, food_title):
+    """Add a food item to the user's favorites in MongoDB."""
+    # Find the user by username and add the food title to the favorites list
+    collection.update_one(
+        {"username": username},
+        {"$addToSet": {"favorites": food_title}}  # $addToSet ensures no duplicates
+    )
+
 
 
 if __name__ == "__main__":

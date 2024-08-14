@@ -13,6 +13,7 @@ def authenticate(username, password):
     """Check if the provided username and password match any in the MongoDB collection."""
     user = collection.find_one({"username": username, "password": password})
     if user:
+        st.session_state['logged_in_user'] = username
         return True
     return False
 
