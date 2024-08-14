@@ -79,7 +79,7 @@ def main():
                             
                             st.markdown(f"**{row['Title'].strip()}**")
                             
-                            if st.button(f"More details about {row['Title']}", key=row['Title']):
+                            if st.button(f"More details", key=row['Title']):
                                 switch_to_details(row['Title'])  # Switch to the Details view
                                 st.rerun()  # Force rerun to update the view
 
@@ -182,6 +182,74 @@ def main():
                 st.warning("No meals found with the given ingredients.")
 
 
+    with tab3:
+        st.header("Your Favorite Meals")
+        username = st.session_state['username']  # Get the logged-in username
+        
+        # Retrieve the user's favorite meals from MongoDB
+        user = collection.find_one({"username": username})
+        favorites = user.get("favorites", [])
+
+        if favorites:
+            # Load the food data
+            food = st.session_state.food_data
+
+            # Filter the food data to only include favorite items
+            favorite_foods = food[food['Title'].isin(favorites)]
+
+            if not favorite_foods.empty:
+                N_cards_per_row = 3  # Number of cards per row
+
+                # Check if a specific food is selected to show details
+                if 'selected_favorite' not in st.session_state:
+                    st.session_state.selected_favorite = None
+
+                if st.session_state.selected_favorite:
+                    # Show the details of the selected food
+                    selected_food_item = food[food['Title'] == st.session_state.selected_favorite]
+
+                    if not selected_food_item.empty:
+                        food_item = selected_food_item.iloc[0]
+                        image_path = os.path.join(image_directory, food_item['Image_Name'] + '.jpg')
+
+                        if os.path.exists(image_path):
+                            st.image(image_path, use_column_width=True)
+                        else:
+                            st.error(f"Image not found: {food_item['Image_Name']}")
+                        
+                        st.markdown(f"## {food_item['Title']}")
+                        st.markdown(f"**Ingredients:** {food_item['Ingredients']}")
+                        st.markdown(f"**Instructions:** {food_item['Instructions']}")
+
+                        if st.button("Back to Favorites"):
+                            st.session_state.selected_favorite = None
+                            st.rerun()
+                    else:
+                        st.error("The selected food item could not be found.")
+                else:
+                    # Display the list of favorite foods
+                    for n_row, row in favorite_foods.reset_index().iterrows():
+                        i = n_row % N_cards_per_row
+                        if i == 0:
+                            st.write("---")
+                            cols = st.columns(N_cards_per_row, gap="large")
+
+                        with cols[i]:
+                            # Construct the full image path with extension
+                            image_path = os.path.join(image_directory, row['Image_Name'] + '.jpg')
+
+                            if os.path.exists(image_path):
+                                st.image(image_path, use_column_width=True)
+                            else:
+                                st.error(f"Image not found: {row['Image_Name']}")
+
+                            if st.button(row['Title'], key=row['Title']):
+                                st.session_state.selected_favorite = row['Title']
+                                st.rerun()  # Force rerun to update the view
+            else:
+                st.warning("You don't have any favorites yet.")
+        else:
+            st.warning("You don't have any favorites yet.")
 
 
 def add_to_favorites(username, food_title):
@@ -191,6 +259,8 @@ def add_to_favorites(username, food_title):
         {"username": username},
         {"$addToSet": {"favorites": food_title}}  # $addToSet ensures no duplicates
     )
+
+
 
 
 
