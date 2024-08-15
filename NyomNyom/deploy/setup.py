@@ -25,6 +25,11 @@ def main():
     food = pd.read_csv("input/recipes.csv")
     food.dropna(inplace=True)
 
+    # Define the specific row to remove
+    # Remove the first instance  where 'Title' is "Chopped Salad"
+    index_to_remove = food[food['Title'] == "Chopped Salad"].index[0]
+    food = food.drop(index_to_remove)
+
     # Precompute and save recommendations
     precomputed_recommendations = precompute_recommendations(food, top_n=9)
     with open("precomputed_recommendations.json", "w") as f:
@@ -34,3 +39,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
