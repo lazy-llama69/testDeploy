@@ -170,16 +170,12 @@ def main():
         # Input bar for ingredients
         ingredients_input = st.text_input("Enter the ingredients you have (comma-separated):")
 
-        # Initialize the state for random meal and meal found by ingredients
-        if 'random_meal' not in st.session_state:
-            st.session_state.random_meal = None
-        # if 'found_meal' not in st.session_state:
-        #     st.session_state.found_meal = None
-        # if 'current_meal' not in st.session_state:
-        #     st.session_state.current_meal = None
+        # Initialize a session state variable to hold the current meal
+        if 'current_meal' not in st.session_state:
+            st.session_state.current_meal = None
 
-        # Handle the search input
-        if ingredients_input:
+        # Handle ingredient-based meal search
+        if ingredients_input and st.button("Find Meal Based on Ingredients"):
             # Split the input into a list of ingredients
             ingredients = [ingredient.strip().lower() for ingredient in ingredients_input.split(',')]
             
@@ -188,29 +184,19 @@ def main():
             
             if not filtered_food.empty:
                 # Randomly select one meal from the filtered results and store it in session state
-                # st.session_state.found_meal = filtered_food.sample(1).iloc[0]
-                st.session_state.random_meal = filtered_food.sample(1).iloc[0]  # Clear random meal if found_meal is used
-                st.session_state.random_meal_type = "filtered"
-                # st.session_state.current_meal = st.session_state.found_meal  # Set the current meal
+                st.session_state.current_meal = filtered_food.sample(1).iloc[0]
             else:
                 st.warning("No meals found with the given ingredients.")
-                st.session_state.found_meal = None
+                st.session_state.current_meal = None
 
-        # Center-align the button using columns
-        col1, col2, col3 = st.columns([1, 1, 1])
-        
-        with col2:
-            if st.button("Find a Random Meal"):
-                # Pick a random meal from the entire dataset and store it in session state
-                st.session_state.random_meal = food.sample(1).iloc[0]
-                st.session_state.random_meal_type = "random"
+        # Handle random meal generation
+        if st.button("Find a Completely Random Meal"):
+            # Pick a random meal from the entire dataset and store it in session state
+            st.session_state.current_meal = food.sample(1).iloc[0]
 
-                # st.session_state.found_meal = None  # Clear found meal if random meal is used
-                # st.session_state.current_meal = st.session_state.random_meal  # Set the current meal
-
-        # Display the current meal (either found or random)
-        if st.session_state.random_meal is not None:
-            display_meal = st.session_state.random_meal
+        # Display the current meal
+        if st.session_state.current_meal is not None:
+            display_meal = st.session_state.current_meal
             image_path = os.path.join(image_directory, display_meal['Image_Name'] + '.jpg')
 
             st.markdown(f"## {display_meal['Title']}")
@@ -233,8 +219,8 @@ def main():
                     st.success(f"{display_meal['Title']} has been added to your favorites! 😉")
                 else:
                     st.error("You must be logged in to add to favorites.")
-        elif ingredients_input and st.session_state.found_meal is None and st.session_state.current_meal is None:
-            st.warning("No meals found with the given ingredients.")
+        else:
+            st.info("Please search for a meal or find a random one.")
 
 
 
