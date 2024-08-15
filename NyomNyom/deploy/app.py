@@ -53,11 +53,23 @@ def main():
             st.subheader("What do you feel like eating today? 🍴")
             st.subheader("🍔 🍜 🍱 🌮 🥟 🍣 🥞 🧋 🍰 🥐 🥗 🍲 🍛")
 
-            search_term = st.text_input("Search for a food item:")
+            # Add a radio button group for choosing search criteria
+            search_by = st.radio(
+                "Search by:",
+                ("Title", "Ingredients")
+            )
+
+            search_term = st.text_input("Search for a food item or ingredient:")
 
             # Display results only if a search term is entered
             if search_term:
-                filtered_food = food[food['Title'].str.contains(search_term, case=False, na=False)].head(18)
+                if search_by == "Title":
+                    # Search by Title
+                    filtered_food = food[food['Title'].str.contains(search_term, case=False, na=False)].head(18)
+                elif search_by == "Ingredients":
+                    # Search by Ingredients
+                    filtered_food = food[food['Ingredients'].str.contains(search_term, case=False, na=False)].head(18)
+
 
                 if not filtered_food.empty:
                     N_cards_per_row = 3
@@ -164,35 +176,43 @@ def main():
 
     # Tab 2: Find a Meal
     with tab2:
-        st.header("Find a Random Meal Based on Your Ingredients")
+        st.header("Find a Random Meal")
         st.subheader("🥕 🍅 🥑 🌶️ 🧅 🧄 🫚 🌽 🍗 🥩 🥚 🥒 🦐 🥦 🍋 🥓 🧀")
-        
-        # Input bar for ingredients
-        ingredients_input = st.text_input("Enter the ingredients you have (comma-separated):")
+
+        # Radio button to select between search methods
+        search_type = st.radio(
+            "Choose how you'd like to find a meal:",
+            ("Find a Random Meal Based on Ingredients", "Find a Completely Random Meal")
+        )
 
         # Initialize a session state variable to hold the current meal
         if 'current_meal' not in st.session_state:
             st.session_state.current_meal = None
 
-        # Handle ingredient-based meal search
-        if ingredients_input and st.button("Find Meal Based on Ingredients"):
-            # Split the input into a list of ingredients
-            ingredients = [ingredient.strip().lower() for ingredient in ingredients_input.split(',')]
-            
-            # Filter meals that contain any of the input ingredients
-            filtered_food = food[food['Ingredients'].apply(lambda x: any(ingredient in x.lower() for ingredient in ingredients))]
-            
-            if not filtered_food.empty:
-                # Randomly select one meal from the filtered results and store it in session state
-                st.session_state.current_meal = filtered_food.sample(1).iloc[0]
-            else:
-                st.warning("No meals found with the given ingredients.")
-                st.session_state.current_meal = None
+        # Show the input and button based on the radio selection
+        if search_type == "Find a Random Meal Based on Ingredients":
+            # Input bar for ingredients
+            ingredients_input = st.text_input("Enter the ingredients you have (comma-separated):")
 
-        # Handle random meal generation
-        if st.button("Find a Completely Random Meal"):
-            # Pick a random meal from the entire dataset and store it in session state
-            st.session_state.current_meal = food.sample(1).iloc[0]
+            if ingredients_input and st.button("Find Meal Based on Ingredients"):
+                # Split the input into a list of ingredients
+                ingredients = [ingredient.strip().lower() for ingredient in ingredients_input.split(',')]
+                
+                # Filter meals that contain any of the input ingredients
+                filtered_food = food[food['Ingredients'].apply(lambda x: any(ingredient in x.lower() for ingredient in ingredients))]
+                
+                if not filtered_food.empty:
+                    # Randomly select one meal from the filtered results and store it in session state
+                    st.session_state.current_meal = filtered_food.sample(1).iloc[0]
+                else:
+                    st.warning("No meals found with the given ingredients.")
+                    st.session_state.current_meal = None
+
+        elif search_type == "Find a Completely Random Meal":
+            if st.button("I'm Ready to Go Random"):
+                # Pick a random meal from the entire dataset and store it in session state
+                st.session_state.current_meal = food.sample(1).iloc[0]
+
 
         # Display the current meal
         if st.session_state.current_meal is not None:
@@ -219,8 +239,7 @@ def main():
                     st.success(f"{display_meal['Title']} has been added to your favorites! 😉")
                 else:
                     st.error("You must be logged in to add to favorites.")
-        else:
-            st.info("Please search for a meal or find a random one.")
+
 
 
 
