@@ -41,9 +41,8 @@ def main():
         if 'selected_food' not in st.session_state:
             st.session_state.selected_food = None
 
-        # Define functions to switch views
-        def switch_to_details(food_title):
-            st.session_state.selected_food = food_title
+        def switch_to_details(food_title, food_index):
+            st.session_state.selected_food = {'title': food_title, 'index': food_index}
 
         def switch_to_search():
             st.session_state.selected_food = None
@@ -81,8 +80,8 @@ def main():
                             st.markdown(f"**{row['Title'].strip()}**")
 
                             # Clickable food title
-                            if st.button(row['Title'], key=row['Title']):
-                                switch_to_details(row['Title'])  # Switch to the Details view
+                            if st.button(row['Title'], key=row['Index']):
+                                switch_to_details(row['Title'], row['Index'])  # Pass title and index
                                 st.rerun()  # Force rerun to update the view
 
             # Display recommendations below the search bar
@@ -96,29 +95,39 @@ def main():
 
                 if recommendations:
                     N_cards_per_row = 3  # Number of cards per row
-                    for n_row, rec_title in enumerate(recommendations):
-                        recommended_food_item = food[food['Title'] == rec_title].iloc[0]
-                        image_path = os.path.join(image_directory, recommended_food_item['Image_Name'] + '.jpg')
+                    for n_row, rec_item in enumerate(recommendations):
+                        # Filter by both title and index
+                        recommended_food_item = food[(food['Title'] == rec_item['title']) & (food['Index'] == rec_item['index'])]
 
-                        i = n_row % N_cards_per_row
-                        if i == 0:
-                            st.write("---")
-                            cols = st.columns(N_cards_per_row, gap="large")
+                        if recommended_food_item.empty:
+                            st.warning(f"No food item found with the title '{rec_item}'")
+                            continue  # Skip to the next recommendation if no match is found
+                        else:
+                            recommended_food_item = recommended_food_item.iloc[0]
+                            image_path = os.path.join(image_directory, recommended_food_item['Image_Name'] + '.jpg')
 
-                        with cols[i]:
-                            if os.path.exists(image_path):
-                                st.image(image_path, use_column_width=True)
-                            else:
-                                st.error(f"Image not found: {recommended_food_item['Image_Name']}")
+                            i = n_row % N_cards_per_row
+                            if i == 0:
+                                st.write("---")
+                                cols = st.columns(N_cards_per_row, gap="large")
 
-                            # Clickable food title
-                            if st.button(rec_title, key=rec_title):
-                                switch_to_details(rec_title)  # Switch to the Details view
-                                st.rerun()  # Trigger a rerun to update the view
+                            with cols[i]:
+                                if os.path.exists(image_path):
+                                    st.image(image_path, use_column_width=True)
+                                else:
+                                    st.error(f"Image not found: {recommended_food_item['Image_Name']}")
+
+                                # Clickable food title with a unique key
+                                unique_key = f"{rec_item['title']}_{rec_item['index']}"
+                                if st.button(rec_item['title'], key=unique_key):
+                                    switch_to_details(rec_item['title'], recommended_food_item['Index'])  # Pass title and index
+                                    st.rerun()  # Trigger a rerun to update the view
+
 
         else:
             # Unified Details view
-            selected_food_item = food[food['Title'] == st.session_state.selected_food]
+            selected_food_item = food[(food['Index'] == st.session_state.selected_food['index']) & 
+                                    (food['Title'] == st.session_state.selected_food['title'])]
             if not selected_food_item.empty:
                 food_item = selected_food_item.iloc[0]
 
@@ -137,7 +146,7 @@ def main():
                 if st.button("Add to Favorites 🩷"):
                     if st.session_state['logged_in_user']:
                         username = st.session_state['logged_in_user']
-                        add_to_favorites(username, food_item['Title'])
+                        add_to_favorites(username, food_item['Title'], food_item["Index"])
                         st.success(f"{food_item['Title']} has been added to your favorites! 😉")
 
                 if st.button("Go back"):
@@ -155,17 +164,19 @@ def main():
 
     # Tab 2: Find a Meal
     with tab2:
-        st.header("Find a Random Meal Based on Your Ingredients ")
+        st.header("Find a Random Meal Based on Your Ingredients")
         st.subheader("🥕 🍅 🥑 🌶️ 🧅 🧄 🫚 🌽 🍗 🥩 🥚 🥒 🦐 🥦 🍋 🥓 🧀")
         
         # Input bar for ingredients
-        ingredients_input = st.text_input(
-            "Enter the ingredients you have (comma-separated):"
-        )
+        ingredients_input = st.text_input("Enter the ingredients you have (comma-separated):")
 
-        # Initialize the state for random meal
+        # Initialize the state for random meal and meal found by ingredients
         if 'random_meal' not in st.session_state:
             st.session_state.random_meal = None
+        # if 'found_meal' not in st.session_state:
+        #     st.session_state.found_meal = None
+        # if 'current_meal' not in st.session_state:
+        #     st.session_state.current_meal = None
 
         # Handle the search input
         if ingredients_input:
@@ -177,8 +188,13 @@ def main():
             
             if not filtered_food.empty:
                 # Randomly select one meal from the filtered results and store it in session state
-                st.session_state.random_meal = filtered_food.sample(1).iloc[0]
+                # st.session_state.found_meal = filtered_food.sample(1).iloc[0]
+                st.session_state.random_meal = filtered_food.sample(1).iloc[0]  # Clear random meal if found_meal is used
                 st.session_state.random_meal_type = "filtered"
+                # st.session_state.current_meal = st.session_state.found_meal  # Set the current meal
+            else:
+                st.warning("No meals found with the given ingredients.")
+                st.session_state.found_meal = None
 
         # Center-align the button using columns
         col1, col2, col3 = st.columns([1, 1, 1])
@@ -189,31 +205,39 @@ def main():
                 st.session_state.random_meal = food.sample(1).iloc[0]
                 st.session_state.random_meal_type = "random"
 
-        # Display the random or filtered meal
-        if st.session_state.random_meal is not None:
-            random_meal = st.session_state.random_meal
-            image_path = os.path.join(image_directory, random_meal['Image_Name'] + '.jpg')
+                # st.session_state.found_meal = None  # Clear found meal if random meal is used
+                # st.session_state.current_meal = st.session_state.random_meal  # Set the current meal
 
-            st.markdown(f"## {random_meal['Title']}")
+        # Display the current meal (either found or random)
+        if st.session_state.random_meal is not None:
+            display_meal = st.session_state.random_meal
+            image_path = os.path.join(image_directory, display_meal['Image_Name'] + '.jpg')
+
+            st.markdown(f"## {display_meal['Title']}")
             
             if os.path.exists(image_path):
                 st.image(image_path, use_column_width=True)
             else:
-                st.error(f"Image not found: {random_meal['Image_Name']}")
-            
-            st.markdown(f"**Ingredients:** {random_meal['Ingredients']}")
-            st.markdown(f"**Instructions:** {random_meal['Instructions']}")
+                st.error(f"Image not found: {display_meal['Image_Name']}")
+
+            st.markdown(f"**Ingredients:** {display_meal['Ingredients']}")
+            st.markdown(f"**Instructions:** {display_meal['Instructions']}")
 
             # Add to Favorites Button
-            if st.button("Add to Favorites 🩷"):
-                if st.session_state['logged_in_user']:
+            unique_key = f"add_fav_{display_meal['Index']}"
+            if st.button("Add to Favorites 🩷", key=unique_key):
+                if st.session_state.get('logged_in_user'):
                     username = st.session_state['logged_in_user']
-                    add_to_favorites(username, random_meal['Title'])
-                    st.success(f"{random_meal['Title']} has been added to your favorites! 😉")
-
-        # No matching meals found
-        elif ingredients_input and st.session_state.random_meal_type == "filtered" and st.session_state.random_meal is None:
+                    st.write(f"Adding {display_meal['Title']} to favorites for user {username}")
+                    add_to_favorites(username, display_meal['Title'], display_meal["Index"])
+                    st.success(f"{display_meal['Title']} has been added to your favorites! 😉")
+                else:
+                    st.error("You must be logged in to add to favorites.")
+        elif ingredients_input and st.session_state.found_meal is None and st.session_state.current_meal is None:
             st.warning("No meals found with the given ingredients.")
+
+
+
 
 
     with tab3:
@@ -228,8 +252,10 @@ def main():
             # Load the food data
             food = st.session_state.food_data
 
-            # Filter the food data to only include favorite items
-            favorite_foods = food[food['Title'].isin(favorites)]
+            favorite_foods = pd.DataFrame([
+                food_item.iloc[0] for favorite in favorites
+                if not (food_item := food[(food['Index'] == favorite['index']) & (food['Title'] == favorite['title'])]).empty
+            ])
 
             if not favorite_foods.empty:
                 N_cards_per_row = 3  # Number of cards per row
@@ -239,9 +265,11 @@ def main():
 
                 if selected_favorite:
                     # Show the details of the selected food
-                    selected_food_item = food[food['Title'] == selected_favorite]
+                    selected_food_item = food[(food['Index'] == selected_favorite['index']) & (food['Title'] == selected_favorite['title'])]
 
-                    if not selected_food_item.empty:
+                    if selected_food_item.empty:
+                        st.warning(f"The selected food item '{selected_favorite['title']}' could not be found.")
+                    else:
                         food_item = selected_food_item.iloc[0]
                         image_path = os.path.join(image_directory, food_item['Image_Name'] + '.jpg')
 
@@ -249,14 +277,14 @@ def main():
                             st.image(image_path, use_column_width=True)
                         else:
                             st.error(f"Image not found: {food_item['Image_Name']}")
-                        
+
                         st.markdown(f"## {food_item['Title']}")
                         st.markdown(f"**Ingredients:** {food_item['Ingredients']}")
                         st.markdown(f"**Instructions:** {food_item['Instructions']}")
 
                         # Add a "Remove from Favorites" button
                         if st.button("Remove from Favorites 💔"):
-                            remove_from_favorites(username, food_item['Title'])
+                            remove_from_favorites(username, food_item['Title'], food_item['Index'])
                             st.success(f"{food_item['Title']} has been removed from your favorites! 🥹")
                             # Delay to allow the success message to appear
                             time.sleep(2)  # Delay for 2 seconds
@@ -266,6 +294,7 @@ def main():
                         if st.button("Back to Favorites"):
                             st.session_state.selected_favorite = None  # Reset the selected favorite
                             st.rerun()  # Rerun to update the view
+
                 else:
                     # Display the list of favorite foods
                     for n_row, row in favorite_foods.reset_index().iterrows():
@@ -286,8 +315,8 @@ def main():
                             # Create a centered button for the title
                             st.markdown("<div style='display: flex; justify-content: center;'>", unsafe_allow_html=True)
                             
-                            if st.button(row['Title'], key=row['Title']):
-                                st.session_state.selected_favorite = row['Title']  # Store the selected title
+                            if st.button(row['Title'], key=row['Index']):
+                                st.session_state.selected_favorite = {'title': row['Title'], 'index': row['Index']}  # Store the selected title and index
                                 st.rerun()  # Rerun to update the view
                             
                             st.markdown("</div>", unsafe_allow_html=True)
@@ -297,26 +326,28 @@ def main():
             st.warning("You don't have any favorites yet.")
 
 
-def switch_to_details(food_title):
-    st.session_state.selected_food = food_title
+def switch_to_details(food_title, food_index):
+    st.session_state.selected_food = {'title': food_title, 'index': food_index}
 
 def switch_to_search():
     st.session_state.selected_food = None
 
 
-def add_to_favorites(username, food_title):
-    """Add a food item to the user's favorites in MongoDB."""
-    # Find the user by username and add the food title to the favorites list
+def add_to_favorites(username, food_title, food_index):
+    """Add a food item to the user's favorites in MongoDB with the index."""
+    # Find the user by username and add the food title along with the index to the favorites list
+    food_index = int(food_index)
     collection.update_one(
         {"username": username},
-        {"$addToSet": {"favorites": food_title}}  # $addToSet ensures no duplicates
+        {"$addToSet": {"favorites": {"title": food_title, "index": food_index}}}  # $addToSet ensures no duplicates
     )
 
-def remove_from_favorites(username, food_title):
+def remove_from_favorites(username, food_title, food_index):
     """Remove a food item from the user's favorites in MongoDB."""
+    food_index = int(food_index)
     collection.update_one(
         {"username": username},
-        {"$pull": {"favorites": food_title}}  # $pull removes the item from the array
+        {"$pull": {"favorites": {"title": food_title, "index": food_index}}}  # $pull removes the item from the array
     )
 
 
@@ -327,13 +358,29 @@ def load_precomputed_recommendations():
 
 precomputed_recommendations = load_precomputed_recommendations()
 
-def food_recommendation_from_precomputed(food, favorite_titles=None, top_n=9):
+def food_recommendation_from_precomputed(food, favorite_items=None, top_n=9):
+    if favorite_items is None:
+        favorite_items = []
+
     all_recommendations = []
 
-    for food_title in favorite_titles:
-        if food_title in precomputed_recommendations:
-            all_recommendations.extend(precomputed_recommendations[food_title])
+    for favorite in favorite_items:
+        food_index = favorite['index']  # Extract the index from the favorite dictionary
+        all_recommendations.extend(precomputed_recommendations[str(food_index)])
+    # print("\n\nfav items"+str(favorite_items))
+    # print(precomputed_recommendations["1"])
+    # all_recommendations.extend(precomputed_recommendations["1"])
+    # print(all)
+    # Convert the list of dictionaries to a set of tuples (title, index) for easier comparison
+    favorite_set = set((fav['title'], fav['index']) for fav in favorite_items)
 
-    all_recommendations = [rec for rec in all_recommendations if rec not in favorite_titles]
-    unique_recommendations = pd.Series(all_recommendations).value_counts().index.tolist()
+    # Filter out any recommendations that are already in the user's favorites
+    filtered_recommendations = [
+        rec for rec in all_recommendations 
+        if (rec['title'], rec['index']) not in favorite_set
+    ]
+    
+    # Sort and return the unique recommendations
+    unique_recommendations = pd.Series(filtered_recommendations).value_counts().index.tolist()
     return unique_recommendations[:top_n]
+
