@@ -153,7 +153,6 @@ def main():
 
 
 
-
     # Tab 2: Find a Meal
     with tab2:
         st.header("Find a Random Meal Based on Your Ingredients ")
@@ -163,22 +162,38 @@ def main():
         ingredients_input = st.text_input(
             "Enter the ingredients you have (comma-separated):"
         )
-        
+
+        # Initialize the state for random meal
+        if 'random_meal' not in st.session_state:
+            st.session_state.random_meal = None
+
+        # Handle the search input
+        if ingredients_input:
+            # Split the input into a list of ingredients
+            ingredients = [ingredient.strip().lower() for ingredient in ingredients_input.split(',')]
+            
+            # Filter meals that contain any of the input ingredients
+            filtered_food = food[food['Ingredients'].apply(lambda x: any(ingredient in x.lower() for ingredient in ingredients))]
+            
+            if not filtered_food.empty:
+                # Randomly select one meal from the filtered results and store it in session state
+                st.session_state.random_meal = filtered_food.sample(1).iloc[0]
+                st.session_state.random_meal_type = "filtered"
+
         # Center-align the button using columns
         col1, col2, col3 = st.columns([1, 1, 1])
         
-        # Check if the user clicked the button
-        random_button_clicked = False
         with col2:
             if st.button("Find a Random Meal"):
-                # Pick a random meal from the entire dataset
-                random_meal = food.sample(1).iloc[0]
-                random_button_clicked = True
-                # Define image path here
-                image_path = os.path.join(image_directory, random_meal['Image_Name'] + '.jpg')
+                # Pick a random meal from the entire dataset and store it in session state
+                st.session_state.random_meal = food.sample(1).iloc[0]
+                st.session_state.random_meal_type = "random"
 
-        if random_button_clicked:
-            # Make sure everything below the button is left-aligned
+        # Display the random or filtered meal
+        if st.session_state.random_meal is not None:
+            random_meal = st.session_state.random_meal
+            image_path = os.path.join(image_directory, random_meal['Image_Name'] + '.jpg')
+
             st.markdown(f"## {random_meal['Title']}")
             
             if os.path.exists(image_path):
@@ -189,48 +204,16 @@ def main():
             st.markdown(f"**Ingredients:** {random_meal['Ingredients']}")
             st.markdown(f"**Instructions:** {random_meal['Instructions']}")
 
-             # Add to Favorites Button
+            # Add to Favorites Button
             if st.button("Add to Favorites 🩷"):
                 if st.session_state['logged_in_user']:
                     username = st.session_state['logged_in_user']
                     add_to_favorites(username, random_meal['Title'])
                     st.success(f"{random_meal['Title']} has been added to your favorites! 😉")
-        
-        # Check if the user pressed Enter in the text_input and the button was not clicked
-        if ingredients_input and not random_button_clicked:
-            # Split the input into a list of ingredients
-            ingredients = [ingredient.strip().lower() for ingredient in ingredients_input.split(',')]
-            
-            # Filter meals that contain any of the input ingredients
-            filtered_food = food[food['Ingredients'].apply(lambda x: any(ingredient in x.lower() for ingredient in ingredients))]
-            
-            if not filtered_food.empty:
-                # Randomly select one meal from the filtered results
-                random_meal = filtered_food.sample(1).iloc[0]
-                
-                # Define image path here as well
-                image_path = os.path.join(image_directory, random_meal['Image_Name'] + '.jpg')
-                
-                # Display the selected meal
-                st.markdown(f"## {random_meal['Title']}")
-                
-                if os.path.exists(image_path):
-                    st.image(image_path, use_column_width=True)
-                else:
-                    st.error(f"Image not found: {random_meal['Image_Name']}")
-                
-                st.markdown(f"**Ingredients:** {random_meal['Ingredients']}")
-                st.markdown(f"**Instructions:** {random_meal['Instructions']}")
 
-                 # Add to Favorites Button
-                if st.button("Add to Favorites 🩷"):
-                    if st.session_state['logged_in_user']:
-                        username = st.session_state['logged_in_user']
-                        add_to_favorites(username, random_meal['Title'])
-                        st.success(f"{random_meal['Title']} has been added to your favorites! 😉")
-
-            else:
-                st.warning("No meals found with the given ingredients.")
+        # No matching meals found
+        elif ingredients_input and st.session_state.random_meal_type == "filtered" and st.session_state.random_meal is None:
+            st.warning("No meals found with the given ingredients.")
 
 
     with tab3:
