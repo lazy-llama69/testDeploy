@@ -44,8 +44,8 @@ def main():
         st.session_state.page = "login"
 
     if st.session_state.logged_in:
-        import app
-        app.main()
+        import main
+        main.main()
     else:
         if st.session_state.page == "login":
             login_page()
