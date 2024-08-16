@@ -43,7 +43,7 @@ def main():
     food = food.reset_index(drop=True)
 
     # Precompute and save recommendations
-    precomputed_recommendations = precompute_recommendations(food, top_n=9)
+    precomputed_recommendations = precompute_recommendations(food, top_n=40)
     with open("precomputed_recommendations.json", "w") as f:
         json.dump(precomputed_recommendations, f)
 
