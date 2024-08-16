@@ -23,6 +23,12 @@ def display_home_tab(collection, image_directory, food):
         st.subheader("What do you feel like eating today? 🍴")
         st.subheader("🍔 🍜 🍱 🌮 🥟 🍣 🥞 🧋 🍰 🥐 🥗 🍲 🍛")
 
+        # List of common allergens
+        allergens = ["Gluten", "Peanuts", "Tree Nuts", "Dairy", "Soy", "Eggs", "Fish", "Shellfish"]
+
+        # Multiselect for allergens
+        selected_allergens = st.multiselect("Select Allergens to Avoid", allergens)
+
         # Add a radio button group for choosing search criteria
         search_by = st.radio(
             "Search by:",
@@ -78,7 +84,8 @@ def display_home_tab(collection, image_directory, food):
                 N_cards_per_row = 3  # Number of cards per row
                 for n_row, rec_item in enumerate(recommendations):
                     # Filter by both title and index
-                    recommended_food_item = food[(food['Title'] == rec_item['title']) & (food['Index'] == rec_item['index'])]
+                    recommended_food_item = food[
+                        (food['Title'] == rec_item['title']) & (food['Index'] == rec_item['index'])]
 
                     if recommended_food_item.empty:
                         st.warning(f"No food item found with the title '{rec_item}'")
@@ -101,12 +108,13 @@ def display_home_tab(collection, image_directory, food):
                             # Clickable food title with a unique key
                             unique_key = f"{rec_item['title']}_{rec_item['index']}"
                             if st.button(rec_item['title'], key=unique_key):
-                                switch_to_details(rec_item['title'], recommended_food_item['Index'])  # Pass title and index
+                                switch_to_details(rec_item['title'],
+                                                  recommended_food_item['Index'])  # Pass title and index
                                 st.rerun()  # Trigger a rerun to update the view
     else:
         # Unified Details view
-        selected_food_item = food[(food['Index'] == st.session_state.selected_food['index']) & 
-                                (food['Title'] == st.session_state.selected_food['title'])]
+        selected_food_item = food[(food['Index'] == st.session_state.selected_food['index']) &
+                                  (food['Title'] == st.session_state.selected_food['title'])]
         if not selected_food_item.empty:
             food_item = selected_food_item.iloc[0]
 
@@ -136,22 +144,73 @@ def display_home_tab(collection, image_directory, food):
             if st.button("Go back"):
                 switch_to_search()
                 st.rerun()
+
+
 import json
+
+
 def load_precomputed_recommendations():
     with open("precomputed_recommendations.json", "r") as f:
         return json.load(f)
 
+
 precomputed_recommendations = load_precomputed_recommendations()
 
-def food_recommendation_from_precomputed(food, favorite_items=None, top_n=9):
+allergen_ingredient_mapping = {
+    "Gluten": ["bread", "pasta", "flour", "wheat", "barley", "rye", "bulgur", "farro", "graham", "kamut", "matzo",
+               "semolina", "spelt", "triticale", "bran"],
+    "Peanuts": ["peanuts", "peanut butter", "peanut oil", "groundnut"],
+    "Dairy": ["milk", "cheese", "butter", "cream", "yogurt", "buttermilk", "ghee", "whey", "casein", "custard",
+              "ice cream"],
+    "Soy": ["soy", "soy sauce", "tofu", "tempeh", "edamame", "miso", "soy protein", "soy lecithin", "soya milk"],
+    "Eggs": ["eggs", "egg whites", "mayonnaise", "albumin", "meringue", "ovalbumin"],
+    "Fish": ["salmon", "tuna", "cod", "haddock", "tilapia", "mackerel", "sardines", "anchovies", "herring", "bass"],
+    "Shellfish": ["shrimp", "crab", "lobster", "clams", "oysters", "mussels", "scallops", "prawns", "crawfish",
+                  "abalone"],
+    "Tree Nuts": ["almonds", "walnuts", "pecans", "cashews", "hazelnuts", "macadamia nuts", "pistachios", "brazil nuts",
+                  "pine nuts", "chestnuts"]
+}
+
+
+def food_recommendation_from_precomputed(food, favorite_items=None, top_n=9, selected_allergens=None,
+                                         allergen_mapping=None):
     if favorite_items is None:
         favorite_items = []
 
+    if selected_allergens is None:
+        selected_allergens = []
+
+    if allergen_mapping is None:
+        allergen_mapping = {
+            "Gluten": ["bread", "pasta", "flour", "wheat", "barley", "rye", "bulgur", "farro", "graham", "kamut",
+                       "matzo", "semolina", "spelt", "triticale", "bran"],
+            "Peanuts": ["peanuts", "peanut butter", "peanut oil", "groundnut"],
+            "Dairy": ["milk", "cheese", "butter", "cream", "yogurt", "buttermilk", "ghee", "whey", "casein", "custard",
+                      "ice cream"],
+            "Soy": ["soy", "soy sauce", "tofu", "tempeh", "edamame", "miso", "soy protein", "soy lecithin",
+                    "soya milk"],
+            "Eggs": ["eggs", "egg whites", "mayonnaise", "albumin", "meringue", "ovalbumin"],
+            "Fish": ["salmon", "tuna", "cod", "haddock", "tilapia", "mackerel", "sardines", "anchovies", "herring",
+                     "bass"],
+            "Shellfish": ["shrimp", "crab", "lobster", "clams", "oysters", "mussels", "scallops", "prawns", "crawfish",
+                          "abalone"],
+            "Tree Nuts": ["almonds", "walnuts", "pecans", "cashews", "hazelnuts", "macadamia nuts", "pistachios",
+                          "brazil nuts", "pine nuts", "chestnuts"]
+        }
+
     all_recommendations = []
+
+    st.write("Step 1: Adding precomputed recommendations based on favorite items")
 
     for favorite in favorite_items:
         food_index = favorite['index']  # Extract the index from the favorite dictionary
-        all_recommendations.extend(precomputed_recommendations[str(food_index)])
+        st.write(f"Processing favorite: {favorite['title']} (index: {food_index})")
+        if str(food_index) in precomputed_recommendations:
+            st.write(f"Found precomputed recommendations for index {food_index}")
+            all_recommendations.extend(precomputed_recommendations[str(food_index)])
+        else:
+            st.write(f"Warning: No precomputed recommendations found for index {food_index}")
+
     # print("\n\nfav items"+str(favorite_items))
     # print(precomputed_recommendations["1"])
     # all_recommendations.extend(precomputed_recommendations["1"])
@@ -159,13 +218,44 @@ def food_recommendation_from_precomputed(food, favorite_items=None, top_n=9):
     # Convert the list of dictionaries to a set of tuples (title, index) for easier comparison
     favorite_set = set((fav['title'], fav['index']) for fav in favorite_items)
 
+    st.write("Step 2: All collected recommendations (before filtering)")
+    st.write(all_recommendations)
+
     # Filter out any recommendations that are already in the user's favorites
     filtered_recommendations = [
-        rec for rec in all_recommendations 
+        rec for rec in all_recommendations
         if (rec['title'], rec['index']) not in favorite_set
     ]
-    
+
+    # Function to check if any allergen-related ingredients are present in the dish
+    def contains_allergen_ingredients(ingredients, allergens, allergen_mapping):
+        for allergen in allergens:
+            related_ingredients = allergen_mapping.get(allergen, [])
+            if any(ingredient in ingredients for ingredient in related_ingredients):
+                st.write(f"Found allergen: {allergen} in {ingredients}")
+                return True
+        return False
+
+    allergen_free_recommendations = []
+
+    st.write("Step 4: Filtering recommendations by allergens")
+    for rec in filtered_recommendations:
+        food_index = rec['index']
+        st.write(f"Checking recommendation: {rec['title']} (index: {rec['index']})")
+        if not food.loc[food['Index'] == food_index, 'Ingredients'].empty:
+            ingredients = food.loc[food['Index'] == food_index, 'Ingredients'].values[0]
+            st.write(f"Ingredients: {ingredients}")
+
+            # Check if the ingredients contain any allergens and print the ones being filtered out
+            if contains_allergen_ingredients(ingredients, selected_allergens, allergen_mapping):
+                print(f"Filtered out: {rec['title']} (index: {rec['index']}) due to allergens in: {ingredients}")
+            else:
+                allergen_free_recommendations.append(rec)
+        else:
+            print(f"Warning: No ingredients found for index {food_index}")
+
     # Sort and return the unique recommendations
+    st.write("Step 5: Final recommendations after allergen filtering")
     unique_recommendations = pd.Series(filtered_recommendations).value_counts().index.tolist()
     return unique_recommendations[:top_n]
 
@@ -178,4 +268,5 @@ def add_to_favorites(collection, username, food_title, food_index):
         {"username": username},
         {"$addToSet": {"favorites": {"title": food_title, "index": food_index}}}  # $addToSet ensures no duplicates
     )
+
 
