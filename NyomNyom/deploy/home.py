@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 import pandas as pd
-
+import json
 
 def display_home_tab(collection, image_directory, food):
     username = st.session_state.get('username', None)
@@ -37,6 +37,22 @@ def display_home_tab(collection, image_directory, food):
 
         search_term = st.text_input("Search for a food item or ingredient:")
 
+        
+        allergen_mapping = {
+            "Gluten": ["bread", "pasta", "flour", "wheat", "barley", "rye", "bulgur", "farro", "graham", "kamut", "matzo",
+                "semolina", "spelt", "triticale", "bran", "spaghetti", "macaroni", "fettuccine", "linguine", "penne", "psyllium husks"],
+            "Peanuts": ["peanuts", "peanut butter", "peanut oil", "groundnut"],
+            "Dairy": ["milk", "cheese", "butter", "cream", "yogurt", "buttermilk", "ghee", "whey", "casein", "custard",
+                    "ice cream", "cotijia", "parmesan"],
+            "Soy": ["soy", "soy sauce", "tofu", "tempeh", "edamame", "miso", "soy protein", "soy lecithin", "soya milk"],
+            "Eggs": ["eggs", "egg whites", "mayonnaise", "albumin", "meringue", "ovalbumin"],
+            "Fish": ["salmon", "tuna", "cod", "haddock", "tilapia", "mackerel", "sardines", "anchovies", "herring", "bass"],
+            "Shellfish": ["shrimp", "crab", "lobster", "clams", "oysters", "mussels", "scallops", "prawns", "crawfish",
+                        "abalone"],
+            "Tree Nuts": ["almonds", "walnuts", "pecans", "cashews", "hazelnuts", "macadamia nuts", "pistachios", "brazil nuts",
+                        "pine nuts", "chestnuts"]
+        }
+
         # Display results only if a search term is entered
         if search_term:
             if search_by == "Title":
@@ -45,6 +61,39 @@ def display_home_tab(collection, image_directory, food):
             elif search_by == "Ingredients":
                 # Search by Ingredients
                 filtered_food = food[food['Ingredients'].str.contains(search_term, case=False, na=False)].head(18)
+
+            # Filter by allergens
+            if selected_allergens:
+                allergen_filtered_food = []
+
+                def contains_allergen_ingredients(ingredients, allergens, allergen_mapping):
+                    ingredients_lower = [ingredient.lower() for ingredient in ingredients]
+                    
+                    for allergen in allergens:
+                        related_ingredients = allergen_mapping.get(allergen, [])
+                        related_ingredients_lower = [ri.lower() for ri in related_ingredients]
+
+                        for ingredient in ingredients_lower:
+                            for related in related_ingredients_lower:
+                                if related in ingredient:
+                                    return True
+                    return False
+
+                for idx, row in filtered_food.iterrows():
+                    ingredients = row['Ingredients']
+                    # Ensure ingredients are a list
+                    if isinstance(ingredients, str):
+                        try:
+                            ingredients = eval(ingredients)  # Safely evaluate string to list
+                        except:
+                            continue  # Skip this item if ingredients are not correctly formatted
+                    
+                    # Check if the food item contains any of the selected allergens
+                    if not contains_allergen_ingredients(ingredients, selected_allergens, allergen_mapping):
+                        allergen_filtered_food.append(row)
+
+                filtered_food = pd.DataFrame(allergen_filtered_food)
+
 
             if not filtered_food.empty:
                 N_cards_per_row = 3
@@ -78,7 +127,7 @@ def display_home_tab(collection, image_directory, food):
             user = collection.find_one({"username": username})
             favorite_titles = user.get("favorites", [])
 
-            print(f"selected_allergens before recommending: {selected_allergens}")
+            # print(f"selected_allergens before recommending: {selected_allergens}")
             recommendations = food_recommendation_from_precomputed(food, favorite_titles, 9, selected_allergens)
             # print(recommendations)
             if recommendations:
@@ -147,7 +196,7 @@ def display_home_tab(collection, image_directory, food):
                 st.rerun()
 
 
-import json
+
 
 
 def load_precomputed_recommendations():
@@ -156,22 +205,6 @@ def load_precomputed_recommendations():
 
 
 precomputed_recommendations = load_precomputed_recommendations()
-
-allergen_ingredient_mapping = {
-    "Gluten": ["bread", "pasta", "flour", "wheat", "barley", "rye", "bulgur", "farro", "graham", "kamut", "matzo",
-           "semolina", "spelt", "triticale", "bran", "spaghetti", "macaroni", "fettuccine", "linguine", "penne"],
-    "Peanuts": ["peanuts", "peanut butter", "peanut oil", "groundnut"],
-    "Dairy": ["milk", "cheese", "butter", "cream", "yogurt", "buttermilk", "ghee", "whey", "casein", "custard",
-              "ice cream"],
-    "Soy": ["soy", "soy sauce", "tofu", "tempeh", "edamame", "miso", "soy protein", "soy lecithin", "soya milk"],
-    "Eggs": ["eggs", "egg whites", "mayonnaise", "albumin", "meringue", "ovalbumin"],
-    "Fish": ["salmon", "tuna", "cod", "haddock", "tilapia", "mackerel", "sardines", "anchovies", "herring", "bass"],
-    "Shellfish": ["shrimp", "crab", "lobster", "clams", "oysters", "mussels", "scallops", "prawns", "crawfish",
-                  "abalone"],
-    "Tree Nuts": ["almonds", "walnuts", "pecans", "cashews", "hazelnuts", "macadamia nuts", "pistachios", "brazil nuts",
-                  "pine nuts", "chestnuts"]
-}
-
 
 def food_recommendation_from_precomputed(food, favorite_items=None, top_n=9, selected_allergens=None, allergen_mapping=None):
     if favorite_items is None:
@@ -240,7 +273,7 @@ def food_recommendation_from_precomputed(food, favorite_items=None, top_n=9, sel
                 # print(f"Converting ingredients from string to list for {rec['title']}")
                 try:
                     ingredients = eval(ingredients)  # Safely evaluate string to list
-                    print("it does go here")
+                    # print("it does go here")
                 except:
                     print(f"Failed to parse ingredients: {ingredients}")
                     continue  # Skip this item if ingredients are not correctly formatted
@@ -248,8 +281,6 @@ def food_recommendation_from_precomputed(food, favorite_items=None, top_n=9, sel
             # print(f"Checking food item: {rec['title']} with ingredients: {ingredients}")
             if not contains_allergen_ingredients(ingredients, selected_allergens, allergen_mapping):
                 allergen_free_recommendations.append(rec)
-            else:
-                print(f"Excluded {rec['title']} due to allergens.")
         else:
             print(f"Warning: No ingredients found for index {food_index}")
 
