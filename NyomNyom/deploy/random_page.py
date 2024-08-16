@@ -67,7 +67,7 @@ def display_random_tab(food, image_directory):
         if st.button("Add to Favorites 🩷", key=unique_key):
             if st.session_state.get('logged_in_user'):
                 username = st.session_state['logged_in_user']
-                st.write(f"Adding {display_meal['Title']} to favorites for user {username}")
+                # st.write(f"Adding {display_meal['Title']} to favorites for user {username}")
                 add_to_favorites(username, display_meal['Title'], display_meal["Index"])
                 st.success(f"{display_meal['Title']} has been added to your favorites! 😉")
             else:
