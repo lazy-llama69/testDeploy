@@ -78,8 +78,9 @@ def display_home_tab(collection, image_directory, food):
             user = collection.find_one({"username": username})
             favorite_titles = user.get("favorites", [])
 
-            recommendations = food_recommendation_from_precomputed(food, favorite_titles, top_n=9)
-
+            print(f"selected_allergens before recommending: {selected_allergens}")
+            recommendations = food_recommendation_from_precomputed(food, favorite_titles, 9, selected_allergens)
+            # print(recommendations)
             if recommendations:
                 N_cards_per_row = 3  # Number of cards per row
                 for n_row, rec_item in enumerate(recommendations):
@@ -158,7 +159,7 @@ precomputed_recommendations = load_precomputed_recommendations()
 
 allergen_ingredient_mapping = {
     "Gluten": ["bread", "pasta", "flour", "wheat", "barley", "rye", "bulgur", "farro", "graham", "kamut", "matzo",
-               "semolina", "spelt", "triticale", "bran"],
+           "semolina", "spelt", "triticale", "bran", "spaghetti", "macaroni", "fettuccine", "linguine", "penne"],
     "Peanuts": ["peanuts", "peanut butter", "peanut oil", "groundnut"],
     "Dairy": ["milk", "cheese", "butter", "cream", "yogurt", "buttermilk", "ghee", "whey", "casein", "custard",
               "ice cream"],
@@ -183,7 +184,7 @@ def food_recommendation_from_precomputed(food, favorite_items=None, top_n=9, sel
     if allergen_mapping is None:
         allergen_mapping = {
             "Gluten": ["bread", "pasta", "flour", "wheat", "barley", "rye", "bulgur", "farro", "graham", "kamut",
-                       "matzo", "semolina", "spelt", "triticale", "bran"],
+                       "matzo", "semolina", "spelt", "triticale", "bran","spaghetti"],
             "Peanuts": ["peanuts", "peanut butter", "peanut oil", "groundnut"],
             "Dairy": ["milk", "cheese", "butter", "cream", "yogurt", "buttermilk", "ghee", "whey", "casein", "custard",
                       "ice cream"],
@@ -200,13 +201,13 @@ def food_recommendation_from_precomputed(food, favorite_items=None, top_n=9, sel
 
     all_recommendations = []
 
-    st.write("Step 1: Adding precomputed recommendations based on favorite items")
+    # st.write("Step 1: Adding precomputed recommendations based on favorite items")
 
     for favorite in favorite_items:
         food_index = favorite['index']  # Extract the index from the favorite dictionary
-        st.write(f"Processing favorite: {favorite['title']} (index: {food_index})")
+        # st.write(f"Processing favorite: {favorite['title']} (index: {food_index})")
         if str(food_index) in precomputed_recommendations:
-            st.write(f"Found precomputed recommendations for index {food_index}")
+            # st.write(f"Found precomputed recommendations for index {food_index}")
             all_recommendations.extend(precomputed_recommendations[str(food_index)])
         else:
             st.write(f"Warning: No precomputed recommendations found for index {food_index}")
@@ -218,8 +219,8 @@ def food_recommendation_from_precomputed(food, favorite_items=None, top_n=9, sel
     # Convert the list of dictionaries to a set of tuples (title, index) for easier comparison
     favorite_set = set((fav['title'], fav['index']) for fav in favorite_items)
 
-    st.write("Step 2: All collected recommendations (before filtering)")
-    st.write(all_recommendations)
+    # st.write("Step 2: All collected recommendations (before filtering)")
+    # st.write(all_recommendations)
 
     # Filter out any recommendations that are already in the user's favorites
     filtered_recommendations = [
@@ -229,34 +230,55 @@ def food_recommendation_from_precomputed(food, favorite_items=None, top_n=9, sel
 
     # Function to check if any allergen-related ingredients are present in the dish
     def contains_allergen_ingredients(ingredients, allergens, allergen_mapping):
+        ingredients_lower = [ingredient.lower() for ingredient in ingredients]  # Lowercase all ingredients for comparison
+        
         for allergen in allergens:
             related_ingredients = allergen_mapping.get(allergen, [])
-            if any(ingredient in ingredients for ingredient in related_ingredients):
-                st.write(f"Found allergen: {allergen} in {ingredients}")
-                return True
+            related_ingredients_lower = [ri.lower() for ri in related_ingredients]  # Lowercase all related ingredients
+            
+            # # Debugging print statements
+            # print(f"Checking for allergen: {allergen}")
+            # print(f"Ingredients: {ingredients_lower}")
+            # print(f"Related ingredients for {allergen}: {related_ingredients_lower}")
+
+            # Check for partial matches in the ingredients list
+            for ingredient in ingredients_lower:
+                for related in related_ingredients_lower:
+                    if related in ingredient:
+                        # print(f"Found allergen '{related}' in ingredient '{ingredient}'")
+                        return True
         return False
+
 
     allergen_free_recommendations = []
 
-    st.write("Step 4: Filtering recommendations by allergens")
+    # st.write("Step 4: Filtering recommendations by allergens")
     for rec in filtered_recommendations:
         food_index = rec['index']
-        st.write(f"Checking recommendation: {rec['title']} (index: {rec['index']})")
+        # st.write(f"Checking recommendation: {rec['title']} (index: {rec['index']})")
         if not food.loc[food['Index'] == food_index, 'Ingredients'].empty:
             ingredients = food.loc[food['Index'] == food_index, 'Ingredients'].values[0]
-            st.write(f"Ingredients: {ingredients}")
-
+            # st.write(f"Ingredients: {ingredients}")
+            # print(selected_allergens)
+            # print(f"ingredients: {ingredients}")
             # Check if the ingredients contain any allergens and print the ones being filtered out
-            if contains_allergen_ingredients(ingredients, selected_allergens, allergen_mapping):
-                print(f"Filtered out: {rec['title']} (index: {rec['index']}) due to allergens in: {ingredients}")
-            else:
+            if not contains_allergen_ingredients(ingredients, selected_allergens, allergen_mapping):
+                # print(f"Filtered out: {rec['title']} (index: {rec['index']}) due to allergens in: {ingredients}")
+                if(rec['title']=="Spaghetti Carbonara with Pork Belly and Fresh Peas"):
+                    print(selected_allergens)
+                    print(f"\n ingredients{ingredients }\n\n\n")
+                    # print(allergen_mapping)
+                    print("IT FKIN DOESNT WORK")
                 allergen_free_recommendations.append(rec)
         else:
             print(f"Warning: No ingredients found for index {food_index}")
 
     # Sort and return the unique recommendations
-    st.write("Step 5: Final recommendations after allergen filtering")
-    unique_recommendations = pd.Series(filtered_recommendations).value_counts().index.tolist()
+    # st.write("Step 5: Final recommendations after allergen filtering")
+    # st.write(filtered_recommendations)
+
+    unique_recommendations = pd.Series(allergen_free_recommendations).value_counts().index.tolist()
+
     return unique_recommendations[:top_n]
 
 
@@ -270,3 +292,64 @@ def add_to_favorites(collection, username, food_title, food_index):
     )
 
 
+def test_contains_allergen_ingredients():
+    allergen_ingredient_mapping = {
+        "Gluten": ["bread", "pasta", "flour", "wheat", "barley", "rye", "bulgur", "farro", "graham", "kamut",
+                   "matzo", "semolina", "spelt", "triticale", "bran", "spaghetti", "macaroni", "fettuccine", "linguine", "penne"]
+    }
+    
+    # Test case: Ingredients list containing "spaghetti"
+    ingredients = [
+        '1/2 teaspoon coarse kosher salt',
+        '1/2 teaspoon coriander seeds, crushed',
+        '1 pound fresh pork belly',
+        '1 small onion, quartered',
+        '1 small carrot, peeled, quartered',
+        '1/2 celery stalk, cut into 2-inch pieces',
+        '2 garlic cloves, peeled, smashed',
+        '1 bay leaf',
+        '1/4 teaspoon whole black peppercorns',
+        '2 tablespoons (or more) dry white wine',
+        '1/2 cup low-salt chicken broth',
+        '2 tablespoons olive oil',
+        '1 garlic clove, minced',
+        '1/4 cup dry white wine',
+        '1 pound spaghetti',  # This should trigger the allergen detection
+        '1 1/2 cups fresh shelled peas',
+        '2 large eggs',
+        '1/2 cup grated Parmesan cheese',
+        '1/4 cup grated Pecorino Romano cheese',
+        '1/4 cup chopped fresh Italian parsley'
+    ]
+    
+    selected_allergens = ["Gluten"]
+
+    # Function to check if any allergen-related ingredients are present in the dish
+    def contains_allergen_ingredients(ingredients, allergens, allergen_mapping):
+        ingredients_lower = [ingredient.lower() for ingredient in ingredients]  # Lowercase all ingredients for comparison
+        
+        for allergen in allergens:
+            related_ingredients = allergen_mapping.get(allergen, [])
+            related_ingredients_lower = [ri.lower() for ri in related_ingredients]  # Lowercase all related ingredients
+            
+            # # Debugging print statements
+            # print(f"Checking for allergen: {allergen}")
+            # print(f"Ingredients: {ingredients_lower}")
+            # print(f"Related ingredients for {allergen}: {related_ingredients_lower}")
+
+            # Check for partial matches in the ingredients list
+            for ingredient in ingredients_lower:
+                for related in related_ingredients_lower:
+                    if related in ingredient:
+                        print(f"Found allergen '{related}' in ingredient '{ingredient}'")
+                        return True
+        return False
+
+    # Run the test
+    if contains_allergen_ingredients(ingredients, selected_allergens, allergen_ingredient_mapping):
+        print("Allergen found: Spaghetti is correctly identified as containing gluten.")
+    else:
+        print("Allergen not found: There might be an issue with the detection logic.")
+
+# Call the test function
+test_contains_allergen_ingredients()
