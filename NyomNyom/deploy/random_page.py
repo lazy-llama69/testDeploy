@@ -24,6 +24,12 @@ def display_random_tab(food, image_directory):
     if 'current_meal' not in st.session_state:
         st.session_state.current_meal = None
 
+    # Reset the current meal when the search type changes
+    if 'search_type' not in st.session_state or st.session_state.search_type != search_type:
+        st.session_state.current_meal = None
+        st.session_state.search_type = search_type
+
+        
     # Show the input and button based on the radio selection
     if search_type == "Find a Random Meal Based on Ingredients":
         # Input bar for ingredients

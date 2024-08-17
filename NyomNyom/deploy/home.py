@@ -123,7 +123,7 @@ def display_home_tab(collection, image_directory, food):
                         st.markdown(f"**{row['Title'].strip()}**")
 
                         # Clickable food title
-                        if st.button(row['Title'], key=row['Index']):
+                        if st.button(row['Title'], key=f"home_{row['Index']}_{row['Title']}"):
                             switch_to_details(row['Title'], row['Index'])  # Pass title and index
                             st.rerun()  # Force rerun to update the view
 
@@ -198,7 +198,7 @@ def display_home_tab(collection, image_directory, food):
             st.markdown(f"{formatted_instructions}")
 
             # Add to Favorites Button
-            if st.button("Add to Favorites 🩷"):
+            if st.button("Add to Favorites 🩷",  key=f"fav_{food_item['Index']}_{food_item['Title']}"):
                 if st.session_state['logged_in_user']:
                     username = st.session_state['logged_in_user']
                     add_to_favorites(collection, username, food_item['Title'], food_item["Index"])

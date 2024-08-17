@@ -87,7 +87,7 @@ def display_favourites_tab(collection, image_directory, food):
                         # Create a centered button for the title
                         st.markdown("<div style='display: flex; justify-content: center;'>", unsafe_allow_html=True)
                         
-                        if st.button(row['Title'], key=row['Index']):
+                        if st.button(row['Title'], key=f"fav_tab_{row['Index']}_{row['Title']}"):
                             st.session_state.selected_favorite = {'title': row['Title'], 'index': row['Index']}  # Store the selected title and index
                             st.rerun()  # Rerun to update the view
                         

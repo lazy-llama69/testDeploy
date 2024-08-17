@@ -84,18 +84,17 @@ def generate_food_title_and_image(selected_ingredients):
 
 
 def display_crazy_tab(food):
-    st.title("GO CRAY CRAY 🎉")
+    st.title("Let's Get CRAZY!🎉")
     st.subheader("Lets go wild with some random and fun food choices!")
     st.write("Ready to shake things up? Let's get wild with some out-of-the-box meal ideas! Adjust the crazy slider to set your level of culinary adventure, and we'll whip up something unexpected.")
-    st.write("⚠️ Just a heads-up: this feature works best on Linux and Windows, so make sure you're on the right system to join the fun!")
+    st.warning("⚠️ this feature works best on Windows, might take awhile to generate but be patient. HAVE FUN!⚠️")
 
     # Add a slider to choose a value between 5 and 10
-    num_crazy_options = st.slider("How crazy do you want to go? Choose a number of crazy options:", min_value=5, max_value=10, value=5)
+    num_crazy_options = st.slider("How crazy do you want to go? Choose the number of ingredients:", min_value=5, max_value=10, value=5)
 
     # Add a button to trigger crazy actionsif st.button("Go Crazy! 🤪"):
-    st.write(f"Here is a wild and crazy food recommendation with  {num_crazy_options} ingredients!")
-
     if st.button("Generate Meal"):
+        st.write(f"Here is a wild and crazy food recommendation with  {num_crazy_options} ingredients!")
         selected_ingredients =[]
         # Ensure doesnt crash cuz some ingredients goofy ah
         while True:
