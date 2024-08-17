@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
-import home, random_page, favorites
+import home, random_page, favorites,cuisines
 import pymongo
 
 def main():
@@ -21,7 +21,7 @@ def main():
     image_directory = 'input/Food Images'
 
     # Tabs
-    tab1, tab2, tab3 = st.tabs(["Home", "Random", "Favourites"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Home", "Random", "Favourites", "Cuisines"])
 
     with tab1:
         home.display_home_tab(collection, image_directory, food)
@@ -31,6 +31,10 @@ def main():
 
     with tab3:
         favorites.display_favourites_tab(collection, image_directory, food)
+
+    with tab4:
+        cuisines.display_cuisine_tab(collection, image_directory, food)
+
 
 if __name__ == "__main__":
     main()
