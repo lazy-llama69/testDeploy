@@ -19,7 +19,9 @@ def authenticate(username, password):
 
 def login_page():
     st.title("Welcome to Nyom Nyom! 🤤 ")
-    st.header("Log In")
+    st.write("Your ultimate meal discovery app! Whether you're indecisive or know exactly what you want, we've got you covered. Save your favorite recipes for quick access anytime, explore new cuisines, and get personalized recommendations based on your tastes. Feeling adventurous? Let our random meal generator surprise you with delicious choices! Plus, there's a hidden special feature waiting to be discovered—log in and start your culinary journey today! 🧑🏼‍🍳")
+    st.write("---")
+    st.header("Log In")   
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
@@ -33,7 +35,9 @@ def login_page():
         else:
             st.error("Invalid username or password")
 
-    if st.button("Go to Sign In page"):
+    st.write("")
+    st.write("Don't have an account? Sign up now!")
+    if st.button("Sign Up"):
         st.session_state.page = "sign_in"
         st.rerun()
 
