@@ -100,8 +100,10 @@ Gavin Pan
   
 ## Acknowledgments
 
-- This project utilizes the [Gemini API](https://developers.google.com/genai) and [Hugging Face API](https://huggingface.co/) for generating unique meal titles, images, and instructions. Special thanks to the teams behind these tools for providing such powerful and accessible APIs.
+- This project utilizes the [Gemini API](https://ai.google.dev/api?lang=python) for generating unique meal titles and instructions. Special thanks to the teams behind these tools for the open source API. 
 - The image generation feature uses the [Stable Diffusion v1-5 model](https://huggingface.co/runwayml/stable-diffusion-v1-5) provided by Hugging Face. We thank them for offering such a comprehensive model that enhances the visual experience of this application.
+- The food dataset used in this project is the [Food Ingredients and Recipes Dataset with Images](https://www.kaggle.com/datasets/pes12017000148/food-ingredients-and-recipe-dataset-with-images) by Sakshi Goel, sourced from the Epicurious website. This dataset contains 13k images and rows, providing a robust foundation for meal recommendations and search functionality.
+
 
 <p align="center">
 	Made with pure blood, sweat, tears, and :heart: </a>
