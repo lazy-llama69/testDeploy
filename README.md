@@ -118,6 +118,10 @@ If you fork or clone this repository, **please ensure to replace the API keys wi
 
 **Responsible usage of these resources is highly encouraged.**
 
+
+## License
+[![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://badges.mit-license.org)
+
 <p align="center">
 	Made with pure blood, sweat, tears, and :heart: </a>
 </p>
