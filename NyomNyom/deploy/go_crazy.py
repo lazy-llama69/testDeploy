@@ -5,6 +5,9 @@ import streamlit as st
 import random 
 import pymongo
 import ast
+import io
+from PIL import Image
+import requests
 # Can use your own api key or use mine(this seems kinda risky showing others the api key idk HAHAHA)
 # gemini_api_key = os.getenv("GEMINI_API_KEY")
 # genai.configure(api_key=gemini_api_key)
@@ -15,20 +18,8 @@ collection = db["User"]
 genai.configure(api_key="AIzaSyAHBdAQOzjZiAXUkWD-TjzymkwDd7kxB5g")
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Set up your API key and endpoint
-API_KEY = "lmwr_sk_vYfaUTPZW6_dI5hVY06YlW0CDKmLDWkZmcqVmJ6Wdqf9DyF2"
-endpoint = "https://api.limewire.com/v1/generate-image"# Define the image prompt
+API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
 
-
-# # Check if the request was successful
-# if response2.status_code == 200:
-#     image_data = response2.content
-#     # Save the image
-#     open("generated_image.png", "wb") as f:
-#         f.write(image_data)
-#     print("Image generated and saved as 'generated_image.png'")
-# else:
-#     print("Failed to generate image:", response2.status_code, response2.text)
 
 def display_crazy_tab(food):
     st.title("GO CRAY CRAY 🎉")
@@ -61,6 +52,8 @@ def display_crazy_tab(food):
             selected_ingredients.clear()
             print(f"Attempt failed: {e}")  
     
+
+
     while True:
         try:
             # Generate food title
@@ -73,49 +66,44 @@ def display_crazy_tab(food):
                     temperature=1.5,
                 ),
             )
-            st.header(f"{response.text}")
+            filtered_text = ''.join([char for char in response.text if char.isalnum() or char.isspace()])
+            st.header(f"{filtered_text}")
             break
         except Exception as e:
             print(f"Attempt failed: {e}")
             continue
 
+
+
+
     # Generate the image for the food/meal
-    prompt = f"A delectable image of a meal/food with these ingredients: {selected_ingredients}"
-    payload = {
-        "prompt": prompt,
-        "aspect_ratio": "1:1"
-    }
-    headers = {
-        "Content-Type": "application/json",
-        "X-Api-Version": "v1",
-        "Accept": "application/json",
-        "Authorization": f"Bearer {API_KEY}"
-    }
-    
-    response2 = requests.post(url=endpoint, json=payload, headers=headers)
+    while True:
+        try:
+            prompt = f"A delectable image of a meal/food with these ingredients: {selected_ingredients}"
+            headers = {"Authorization": "Bearer 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"}    
+            def query(payload):
+                response = requests.post(API_URL, headers=headers, json=payload)
+                return response.content
+            image_bytes = query({
+                "inputs": prompt,
+            })
+            # You can access the image with PIL.Image for example
 
-    if response2.status_code == 200:
-        image_data = response2.content
-        image_path = "generated_image.png"
-        with open(image_path, "wb") as f:
-            f.write(image_data)
-        st.write("Image generated and saved as 'generated_image.png'")
-        if os.path.exists(image_path):
-            st.image(image_path, use_column_width=True)
-        else:
-            st.error("The image file was not found after saving.")
-    else:
-        st.error(f"Failed to generate image: {response2.status_code}. {response2.json().get('error', 'Unknown error')}")
-
-
+            image = Image.open(io.BytesIO(image_bytes))
+                
+            # Display the image in Streamlit
+            st.image(image, use_column_width=True)
+            break
+        except Exception as e:
+            print(e)
+            continue
 
 
     # Displays ingredients
     st.markdown("**Ingredients:**")
     for idx, ing in enumerate(selected_ingredients):
         st.markdown(f"{idx+1}. {ing}")
-
-    st.markdown('**Instructions**')
+    st.markdown("")
     prompt =f"Just give me the prep time and instructions \
             ,give me a somewhat realistic but not too long step by step  \
             instructions to prepare this imaginary meal with ingredients {selected_ingredients} \
