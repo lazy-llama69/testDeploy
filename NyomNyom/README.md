@@ -8,9 +8,8 @@ This web application offers a comprehensive and personalized food recommendation
 
 ---
 
-## Preview
 ### The Project is yet to be deployed 
-![streamlit-app-2021-03-03-18-03-82](https://user-images.githubusercontent.com/52796258/109809364-39908d00-7c4e-11eb-808e-4cc7773acfdb.gif)
+
 ## Functionalities
 - User Authentication: Secure login and sign-up with MongoDB Atlas Cloud Database storing user information, including passwords and favorite meals.
 - Database Operations: Add, modify, and delete information within the database.
@@ -73,7 +72,10 @@ Chang Yi Qian
 <td>
 
 Tang Jia Shen
+<p align="center">
 
+</p>
+<p align="center">
 <a href = "https://github.com/lazy-llama69"><img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36"/></a>
 <a href = "https://www.linkedin.com/in/jia-shen-tang-b1a564170/">
 <img src = "http://www.iconninja.com/files/863/607/751/network-linkedin-social-connection-circular-circle-media-icon.svg" width="36" height="36"/>
