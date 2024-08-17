@@ -3,8 +3,8 @@ import pandas as pd
 import os
 import home, random_page, favorites, go_crazy, cuisines
 import pymongo
-import time
-import logging
+# import time
+# import logging
 
 # logging.basicConfig(level=logging.INFO)
 
