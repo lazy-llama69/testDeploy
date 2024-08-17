@@ -1,23 +1,27 @@
 <p align="center">
-<a href="https://dscommunity.in">
-	<img src="https://github.com/Data-Science-Community-SRM/template/blob/master/Header.png?raw=true" width=80%/>
-</a>
-	<h2 align="center"> Food Recomendation System </h2>
-	<h4 align="center"> This is a machine learning web app, when executed, the client gets to choose a food item based on his own liking, and we recommend 10 more such similar foods through our recommendation system. Our system utilizes item-based collaborative filtering to implement the same. We provide a variety of cuisines to choose from with vegetarian/non-vegetarian options as well. <h4>
+	<h2 align="center"> NYOM NYOM</h2>
+	<h4 align="center"> Machine Learning Food Recommendation Web App
+This web application offers a comprehensive and personalized food recommendation experience, enhanced by a rich set of features designed to help users discover and enjoy new dishes.
+
+<h4>
 </p>
 
 ---
-[![DOCS](https://img.shields.io/badge/Documentation-see%20docs-green?style=flat-square&logo=appveyor)](https://docs.streamlit.io/en/stable/) 
-  [![UI ](https://img.shields.io/badge/User%20Interface-Link%20to%20UI-orange?style=flat-square&logo=appveyor)](https://foodrecomm.herokuapp.com/)
 
 ## Preview
-### The Project is Deployed at https://foodrecomm.herokuapp.com/
+### The Project is yet to be deployed 
 ![streamlit-app-2021-03-03-18-03-82](https://user-images.githubusercontent.com/52796258/109809364-39908d00-7c4e-11eb-808e-4cc7773acfdb.gif)
 ## Functionalities
-- [ ]  User can choose vegetarian/non-vegetarian options
-- [ ]  User can select from a variety of cuisines
-- [ ]  The rating scale can be set by the user
-- [ ]  Our system recommends 10 food items similar to the user's initial choice
+- User Authentication: Secure login and sign-up with MongoDB Atlas Cloud Database storing user information, including passwords and favorite meals.
+- Database Operations: Add, modify, and delete information within the database.
+- Meal Database Search: Search through a dataset of 13,000 meals with filters for allergens, and cuisines.
+- Advanced Search Capabilities: Search for meals by title or ingredients.
+- Personalized Recommendations: 9 food items recommended based on the user’s favorite meals using a TF-IDF matrix and item-based collaborative filtering.
+- Meal Information Display: View detailed meal information, including an image, title, ingredients, and cooking instructions.
+- Favorites Management: Add meals to favorites, view them in a dedicated tab, and remove them as desired.
+- Recommendation System Based on Favorites: Tailored recommendations based on the user’s favorite meals.
+- Random Food Generator: Discover meals randomly, either based on selected ingredients or completely at random.
+- Go Crazy Feature: Generate a unique meal using randomly selected ingredients, with AI-generated image, title, ingredients list, and cooking instructions using Gemini and Hugging Face APIs.
 
 <br>
 
@@ -25,18 +29,23 @@
 ## Instructions to run
 
 * Pre-requisites:
-	-  Streamlit
-	-  Python 3.6-3.9
+	-  pandas==2.2.2
+	-  Pillow==10.4.0
+	-  pymongo==4.8.0
+	-  Requests==2.32.3
+	-  scikit_learn==1.5.1
+	-  streamlit==1.37.1
+	-  google-generativeai
 
-* Install Streamlit
+* Install all pre-requisites 
+(ensure you are in the deploy folder before running this line of command): 
 ```bash
-$ pip install streamlit
+$ pip install -r requirements.txt
 ```
-
+* If any errors pop up during installation, just pip install one by one.
 * Executing the source file
-
 ```bash
-$ streamlit run app.py
+$ streamlit run login.py
 ```
 
 ## Contributors
@@ -47,14 +56,14 @@ $ streamlit run app.py
 
 <td>
 
-Ayush Jindal
+Chang Yi Qian
 
 <p align="center">
-<img src = "https://avatars.githubusercontent.com/u/64908612?s=400&u=0badfa617b6e46c5da46f5105f8605bcbeb12a50&v=4"  height="120" alt="Your Name Here (Insert Your Image Link In Src">
+
 </p>
 <p align="center">
-<a href = "https://github.com/ayushjindal23"><img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36"/></a>
-<a href = "https://www.linkedin.com/in/ayushjindal23/">
+<a href = "https://github.com/yiqianeee"><img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36"/></a>
+<a href = "https://www.linkedin.com/in/yi-qian-chang-048420228/">
 <img src = "http://www.iconninja.com/files/863/607/751/network-linkedin-social-connection-circular-circle-media-icon.svg" width="36" height="36"/>
 </a>
 </p>
@@ -63,14 +72,10 @@ Ayush Jindal
 
 <td>
 
-Joshikha M
+Tang Jia Shen
 
-<p align="center">
-<img src = "https://avatars.githubusercontent.com/u/77103140?s=400&u=27715b653bfec4f5723e48fc5543662a11369eb8&v=4"  height="120" alt="Your Name Here (Insert Your Image Link In Src">
-</p>
-<p align="center">
-<a href = "https://github.com/mjoshikha"><img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36"/></a>
-<a href = "https://www.linkedin.com/in/mjoshikha1111/">
+<a href = "https://github.com/lazy-llama69"><img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36"/></a>
+<a href = "https://www.linkedin.com/in/jia-shen-tang-b1a564170/">
 <img src = "http://www.iconninja.com/files/863/607/751/network-linkedin-social-connection-circular-circle-media-icon.svg" width="36" height="36"/>
 </a>
 </p>
@@ -80,14 +85,12 @@ Joshikha M
 
 <td>
 
-Suvodeep Sinha
+Gavin Pan
 
 <p align="center">
-<img src = "https://avatars.githubusercontent.com/u/52796258?s=400&u=ac91850aac9a86d6124283d5435ad0a1a7cdbe53&v=4"  height="120" alt="Your Name Here (Insert Your Image Link In Src">
 </p>
 <p align="center">
-<a href = "https://github.com/Suvoo"><img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36"/></a>
-<a href = "https://www.linkedin.com/in/suvodeep-sinha-59652418b/">
+<a href = "https://www.linkedin.com/in/gavpan/">
 <img src = "http://www.iconninja.com/files/863/607/751/network-linkedin-social-connection-circular-circle-media-icon.svg" width="36" height="36"/>
 </a>
 </p>
@@ -95,10 +98,7 @@ Suvodeep Sinha
 </tr>
   </table>
   
-## License
-[![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://badges.mit-license.org)
-
 <p align="center">
-	Made with :heart: by <a href="https://dscommunity.in">DS Community SRM</a>
+	Made with pure blood, sweat, tears, and :heart: </a>
 </p>
 
