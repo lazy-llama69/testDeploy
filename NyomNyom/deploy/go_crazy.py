@@ -86,6 +86,8 @@ def generate_food_title_and_image(selected_ingredients):
 def display_crazy_tab(food):
     st.title("GO CRAY CRAY 🎉")
     st.subheader("Lets go wild with some random and fun food choices!")
+    st.write("Ready to shake things up? Let's get wild with some out-of-the-box meal ideas! Adjust the crazy slider to set your level of culinary adventure, and we'll whip up something unexpected.")
+    st.write("⚠️ Just a heads-up: this feature works best on Linux and Windows, so make sure you're on the right system to join the fun!")
 
     # Add a slider to choose a value between 5 and 10
     num_crazy_options = st.slider("How crazy do you want to go? Choose a number of crazy options:", min_value=5, max_value=10, value=5)

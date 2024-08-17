@@ -9,8 +9,10 @@ db = client["NyomNyom"]
 collection = db["User"]
 
 def display_random_tab(food, image_directory):
-    st.header("Find a Random Meal")
+    st.title("Find a Random Meal 🎲")
+    st.write("Feeling indecisive? Let us help! Whether you want to whip up something with what’s in your kitchen or leave it all to chance, we’ve got the perfect meal for you. Just enter your ingredients or let us pick something totally random. Your next meal is just a click away!")
     st.subheader("🥕 🍅 🥑 🌶️ 🧅 🧄 🫚 🌽 🍗 🥩 🥚 🥒 🦐 🥦 🍋 🥓 🧀")
+    st.write("---")
 
     # Radio button to select between search methods
     search_type = st.radio(

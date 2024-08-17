@@ -35,7 +35,7 @@ def login_page():
         else:
             st.error("Invalid username or password")
 
-    st.write("")
+    # st.write("---")
     st.write("Don't have an account? Sign up now!")
     if st.button("Sign Up"):
         st.session_state.page = "sign_in"

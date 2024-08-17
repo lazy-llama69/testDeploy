@@ -20,14 +20,21 @@ def display_home_tab(collection, image_directory, food):
     # Display the current view
     if st.session_state.selected_food is None:
         # Search and recommendation view
-        st.subheader("What do you feel like eating today? 🍴")
-        st.subheader("🍔 🍜 🍱 🌮 🥟 🍣 🥞 🧋 🍰 🥐 🥗 🍲 🍛")
+        # st.subheader("What do you feel like eating today? 🍴")
+        # st.subheader("🍔 🍜 🍱 🌮 🥟 🍣 🥞 🧋 🍰 🥐 🥗 🍲 🍛")
 
         # List of common allergens
         allergens = ["Gluten", "Peanuts", "Tree Nuts", "Dairy", "Soy", "Eggs", "Fish", "Shellfish"]
+    
+        st.write("Let us know your allergens, and we'll keep them out of your recommended recipes! 😌")
 
         # Multiselect for allergens
         selected_allergens = st.multiselect("Select Allergens to Avoid", allergens)
+
+        st.write("---")
+
+        st.subheader("What do you feel like eating today? 🍴")
+        st.subheader("🍔 🍜 🍱 🌮 🥟 🍣 🥞 🧋 🍰 🥐 🥗 🍲 🍛")
 
         # Add a radio button group for choosing search criteria
         search_by = st.radio(
@@ -122,6 +129,7 @@ def display_home_tab(collection, image_directory, food):
 
         # Display recommendations below the search bar
         st.subheader("Recommended Meals Based on Your Favorites")
+        st.write("Add more recipes to your favorites, and we'll tailor even better recommendations just for you!")
 
         if username:
             user = collection.find_one({"username": username})

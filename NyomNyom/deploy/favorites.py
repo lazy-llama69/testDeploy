@@ -6,6 +6,7 @@ import time
 
 def display_favourites_tab(collection, image_directory, food):
     st.title("Your Favorite Meals 🩷 ")
+    st.write("The more you stack your favorites, the better our recommendations get. Keep adding those bomb recipes so we can keep feeding you the good stuff! 🔥")
     username = st.session_state.get('username', None)  # Get the logged-in username
     
     # Retrieve the user's favorite meals from MongoDB

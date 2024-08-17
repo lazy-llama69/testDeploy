@@ -18,8 +18,7 @@ cuisines = {
 
 def display_cuisine_tab(collection, image_directory, food):
     st.title("Explore Food by Cuisine 🌏")
-    st.write("Embark on a global culinary adventure! Discover the vibrant flavors and traditions of the world’s top cuisines. From spicy Indian curries to savory Italian pastas, dive into a curated selection of iconic dishes. Select a cuisine to explore authentic recipes and satisfy your taste buds. Whether you're seeking new flavors or revisiting favorites, this is your gateway to a world of delicious possibilities. Bon appétit!")
-    
+    st.write("Choose a cuisine and discover authentic recipes that bring global flavors to your table. Ready to find your next favorite dish? Let's get cooking!")
     if 'selected_food' not in st.session_state:
         st.session_state.selected_food = None
 

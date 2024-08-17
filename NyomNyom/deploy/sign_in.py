@@ -23,6 +23,8 @@ def register(username, password):
 
 def main():
     st.title("Welcome to Nyom Nyom! 🤤 ")
+    st.write("Your ultimate meal discovery app! Whether you're indecisive or know exactly what you want, we've got you covered. Save your favorite recipes for quick access anytime, explore new cuisines, and get personalized recommendations based on your tastes. Feeling adventurous? Let our random meal generator surprise you with delicious choices! Plus, there's a hidden special feature waiting to be discovered—log in and start your culinary journey today! 🧑🏼‍🍳")
+    st.write("---")
     st.header("Sign Up")
 
     new_username = st.text_input("New Username")
