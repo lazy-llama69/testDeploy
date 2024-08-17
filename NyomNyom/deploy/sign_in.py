@@ -1,11 +1,5 @@
 import streamlit as st
 import pymongo
-# Example credentials (in-memory for simplicity)
-CREDENTIALS = {
-    "user1": "password1",
-    "user2": "password2"
-}
-
 # Replace with your actual MongoDB connection string
 client = pymongo.MongoClient("mongodb+srv://tjsdylan0:kzQPOHODZ95Z6fIh@cluster0.1kbkoif.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["NyomNyom"]

@@ -84,6 +84,8 @@ def display_crazy_tab(food):
             def query(payload):
                 response = requests.post(API_URL, headers=headers, json=payload)
                 return response.content
+        
+            st.spinner("Generating your delicious image...")
             image_bytes = query({
                 "inputs": prompt,
             })
