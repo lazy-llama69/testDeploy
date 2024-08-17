@@ -21,7 +21,7 @@ def main():
     image_directory = 'input/Food Images'
 
     # Tabs
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Home", "Random", "Favourites", "GO CRAY CRAY", "Cuisines])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Home", "Random", "Favourites", "GO CRAY CRAY", "Cuisines"])
 
 
     with tab1:
