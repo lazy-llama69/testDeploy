@@ -22,6 +22,7 @@ API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion
 
 @st.cache_resource
 def generate_food_title_and_image(selected_ingredients):
+    
     # Generate food title
     while True:
         try:
@@ -91,38 +92,47 @@ def display_crazy_tab(food):
 
     # Add a button to trigger crazy actionsif st.button("Go Crazy! 🤪"):
     st.write(f"Here is a wild and crazy food recommendation with  {num_crazy_options} ingredients!")
-    selected_ingredients =[]
 
-    # Ensure doesnt crash cuz some ingredients goofy ah
-    while True:
-        try:
-            for _ in range(num_crazy_options):
-                # The given string with the ingredients and other content
-                ingredients_str = food.sample(1).iloc[0]["Ingredients"]
+    if st.button("Generate Meal"):
+        selected_ingredients =[]
+        # Ensure doesnt crash cuz some ingredients goofy ah
+        while True:
+            try:
+                for _ in range(num_crazy_options):
+                    # The given string with the ingredients and other content
+                    ingredients_str = food.sample(1).iloc[0]["Ingredients"]
 
-                # Extract the first occurrence of a list in the string# Find the part of the string that contains the list
-                start_index = ingredients_str.find("[")
-                end_index = ingredients_str.find("]") + 1# Extract the substring that represents the list
-                ingredients_list_str = ingredients_str[start_index:end_index]
+                    # Extract the first occurrence of a list in the string# Find the part of the string that contains the list
+                    start_index = ingredients_str.find("[")
+                    end_index = ingredients_str.find("]") + 1# Extract the substring that represents the list
+                    ingredients_list_str = ingredients_str[start_index:end_index]
 
-                # Convert the string representation of the list to an actual list
-                ingredients_list = ast.literal_eval(ingredients_list_str)
-                selected_ingredients.append(random.choice(ingredients_list))
-            break
-        except Exception as e:
-            selected_ingredients.clear()
-            print(f"Attempt failed: {e}")  
-    
-    with st.spinner("Generating your delicious image..."):
-        food_title, image, instructions = generate_food_title_and_image(selected_ingredients)
+                    # Convert the string representation of the list to an actual list
+                    ingredients_list = ast.literal_eval(ingredients_list_str)
+                    selected_ingredients.append(random.choice(ingredients_list))
+                break
+            except Exception as e:
+                selected_ingredients.clear()
+                print(f"Attempt failed: {e}")  
+        
+        with st.spinner("Generating your delicious image..."):
+            food_title, image, instructions = generate_food_title_and_image(selected_ingredients)
 
-    st.header(f"{food_title}")
-    st.image(image, use_column_width=True)
+         # Store results in session state
+        st.session_state['food_title'] = food_title
+        st.session_state['image'] = image
+        st.session_state['selected_ingredients'] = selected_ingredients
+        st.session_state['instructions'] = instructions
 
-    # Displays ingredients
-    st.markdown("**Ingredients:**")
-    for idx, ing in enumerate(selected_ingredients):
-        st.markdown(f"{idx+1}. {ing}")
-    st.markdown(instructions.text)
+        # Check if data exists in session state and display it\
+        if'food_title'in st.session_state:
+            st.header(f"{st.session_state['food_title']}")
+            st.image(st.session_state['image'], use_column_width=True)
+            st.markdown("**Ingredients:**")
+            for idx, ing in enumerate(st.session_state['selected_ingredients']):
+                st.markdown(f"{idx+1}. {ing}")
+            st.markdown(st.session_state['instructions'].text)
+
+        
     # st.balloons()  # Add some fun with balloons# Add more crazy actions as needed
     # st.write("Stay tuned for more crazy features!")
