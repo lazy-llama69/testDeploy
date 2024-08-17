@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import pandas as pd
 import time 
+import ast
 # from streamlit_extras.let_it_rain import rain
 
 cuisines = {
@@ -130,16 +131,18 @@ def format_ingredients(ingredients):
     # Check if the ingredients are in string format with brackets
     if isinstance(ingredients, str):
         # Remove the square brackets and split the string into individual ingredients
-        ingredients = ingredients.strip("[]")  # Strip square brackets
-        ingredients = ingredients.split(", ")  # Split by comma and space
-        
-        # Further cleaning to remove quotes if necessary
-        ingredients = [ingredient.strip().strip("'").strip('"') for ingredient in ingredients]
-    
+        start_index = ingredients.find("[")
+        end_index = ingredients.find("]") + 1# Extract the substring that represents the list
+        ingredients_list_str = ingredients[start_index:end_index]
+
+        # Convert the string representation of the list to an actual list
+        ingredients_list = ast.literal_eval(ingredients_list_str)
+        ingredients_list = "\n".join([f"- {ingredient.strip()}" for ingredient in ingredients_list])
+
     # Convert the list of ingredients to a formatted string with each ingredient on a new line
-    formatted_ingredients = "\n".join([f"- {ingredient.strip()}" for ingredient in ingredients])
+    # formatted_ingredients = "\n".join([f"- {ingredient.strip()}" for ingredient in ingredients])
     
-    return formatted_ingredients
+    return ingredients_list
 
 
 def format_instructions(instructions):
