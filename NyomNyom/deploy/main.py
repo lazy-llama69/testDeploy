@@ -64,12 +64,13 @@ def main():
 
 
     with tab4:
+
         go_crazy.display_crazy_tab(food)
         # logging.info(f"crazy data loaded in {time.time() - start_time:.2f} seconds")
                                            
     with tab5:
         cuisines.display_cuisine_tab(collection, image_directory, food)
-        logging.info(f"cuisine data loaded in {time.time() - start_time:.2f} seconds")
+        # logging.info(f"cuisine data loaded in {time.time() - start_time:.2f} seconds")
 
 
 if __name__ == "__main__":

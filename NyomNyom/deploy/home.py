@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import json
 
+
 def display_home_tab(collection, image_directory, food):
     username = st.session_state.get('username', None)
     st.title("Welcome back " + username + " 👋🏻")
@@ -17,6 +18,73 @@ def display_home_tab(collection, image_directory, food):
     def switch_to_search():
         st.session_state.selected_food = None
 
+    def display_search_results(filtered_food,image_directory):
+        if not filtered_food.empty:
+            N_cards_per_row = 3 
+            for n_row, row in filtered_food.reset_index().iterrows():
+                i = n_row % N_cards_per_row
+                if i == 0:
+                    st.write("---")
+                    cols = st.columns(N_cards_per_row, gap="large")
+
+                with cols[i]:
+                    image_path = os.path.join(image_directory, row['Image_Name'] + '.jpg')
+
+                    if os.path.exists(image_path):
+                        st.image(image_path, use_column_width=True)
+                    else:
+                        st.error(f"Image not found: {row['Image_Name']}")
+
+                    st.markdown(f"**{row['Title'].strip()}**")
+
+                    if st.button(row['Title'], key=row['Index']):
+                        switch_to_details(row['Title'], row['Index'])  # Pass title and index
+                        st.session_state.selected_food = {'title': row['Title'], 'index': row['Index']}
+
+
+    def display_recommendations(recommendations, food, image_directory):
+        N_cards_per_row = 3# Number of cards per row
+        for n_row, rec_item in enumerate(recommendations):
+            # Filter by both title and index
+            recommended_food_item = food[
+                (food['Title'] == rec_item['title']) & (food['Index'] == rec_item['index'])]
+
+            if recommended_food_item.empty:
+                st.warning(f"No food item found with the title '{rec_item['title']}'")
+                continue# Skip to the next recommendation if no match is foundelse:
+            recommended_food_item = recommended_food_item.iloc[0]
+            image_path = os.path.join(image_directory, recommended_food_item['Image_Name'] + '.jpg')
+
+            i = n_row % N_cards_per_row
+            if i == 0:
+                st.write("---")
+                cols = st.columns(N_cards_per_row, gap="large")
+
+            with cols[i]:
+                if os.path.exists(image_path):
+                    st.image(image_path, use_column_width=True)
+                else:
+                    st.error(f"Image not found: {recommended_food_item['Image_Name']}")
+
+                # Clickable food title with a unique key
+                unique_key = f"{rec_item['title']}_{rec_item['index']}"
+                if st.button(recommended_food_item['Title'], key=unique_key):
+                    st.session_state.selected_food = {'title': recommended_food_item['Title'], 'index': recommended_food_item['Index']}
+                    # Call a function to update the display instead of rerun
+                    display_selected_food_details(recommended_food_item, image_directory)
+
+    def display_selected_food_details(food_item, image_directory):
+        image_path = os.path.join(image_directory, food_item['Image_Name'] + '.jpg')
+
+        if os.path.exists(image_path):
+            st.image(image_path, use_column_width=True)
+        else:
+            st.error(f"Image not found: {food_item['Image_Name']}")
+
+        st.markdown(f"## {food_item['Title']}")
+        st.markdown(f"**Ingredients:** {food_item['Ingredients']}")
+        st.markdown(f"**Instructions:** {food_item['Instructions']}")
+
     # Display the current view
     if st.session_state.selected_food is None:
         # Search and recommendation view
@@ -27,15 +95,16 @@ def display_home_tab(collection, image_directory, food):
         allergens = ["Gluten", "Peanuts", "Tree Nuts", "Dairy", "Soy", "Eggs", "Fish", "Shellfish"]
 
         # Multiselect for allergens
-        selected_allergens = st.multiselect("Select Allergens to Avoid", allergens)
+        selected_allergens = st.multiselect("Select Allergens to Avoid", allergens, key="selected_allergens")
 
         # Add a radio button group for choosing search criteria
         search_by = st.radio(
             "Search by:",
-            ("Title", "Ingredients")
+            ("Title", "Ingredients"),
+            key="search_by"
         )
 
-        search_term = st.text_input("Search for a food item or ingredient:")
+        search_term = st.text_input("Search for a food item or ingredient:", key="search_term")
 
         
         allergen_mapping = {
@@ -95,30 +164,8 @@ def display_home_tab(collection, image_directory, food):
                 filtered_food = pd.DataFrame(allergen_filtered_food)
 
 
-            if not filtered_food.empty:
-                N_cards_per_row = 3
-
-                for n_row, row in filtered_food.reset_index().iterrows():
-                    i = n_row % N_cards_per_row
-                    if i == 0:
-                        st.write("---")
-                        cols = st.columns(N_cards_per_row, gap="large")
-
-                    with cols[i]:
-                        # Construct the full image path with extension
-                        image_path = os.path.join(image_directory, row['Image_Name'] + '.jpg')
-
-                        if os.path.exists(image_path):
-                            st.image(image_path, use_column_width=True)
-                        else:
-                            st.error(f"Image not found: {row['Image_Name']}")
-
-                        st.markdown(f"**{row['Title'].strip()}**")
-
-                        # Clickable food title
-                        if st.button(row['Title'], key=row['Index']):
-                            switch_to_details(row['Title'], row['Index'])  # Pass title and index
-                            st.rerun()  # Force rerun to update the view
+            display_search_results(filtered_food,image_directory)
+            
 
         # Display recommendations below the search bar
         st.subheader("Recommended Meals Based on Your Favorites")
@@ -131,36 +178,7 @@ def display_home_tab(collection, image_directory, food):
             recommendations = food_recommendation_from_precomputed(food, favorite_titles, 9, selected_allergens)
             # print(recommendations)
             if recommendations:
-                N_cards_per_row = 3  # Number of cards per row
-                for n_row, rec_item in enumerate(recommendations):
-                    # Filter by both title and index
-                    recommended_food_item = food[
-                        (food['Title'] == rec_item['title']) & (food['Index'] == rec_item['index'])]
-
-                    if recommended_food_item.empty:
-                        st.warning(f"No food item found with the title '{rec_item}'")
-                        continue  # Skip to the next recommendation if no match is found
-                    else:
-                        recommended_food_item = recommended_food_item.iloc[0]
-                        image_path = os.path.join(image_directory, recommended_food_item['Image_Name'] + '.jpg')
-
-                        i = n_row % N_cards_per_row
-                        if i == 0:
-                            st.write("---")
-                            cols = st.columns(N_cards_per_row, gap="large")
-
-                        with cols[i]:
-                            if os.path.exists(image_path):
-                                st.image(image_path, use_column_width=True)
-                            else:
-                                st.error(f"Image not found: {recommended_food_item['Image_Name']}")
-
-                            # Clickable food title with a unique key
-                            unique_key = f"{rec_item['title']}_{rec_item['index']}"
-                            if st.button(rec_item['title'], key=unique_key):
-                                switch_to_details(rec_item['title'],
-                                                  recommended_food_item['Index'])  # Pass title and index
-                                st.rerun()  # Trigger a rerun to update the view
+                display_recommendations(recommendations,food, image_directory)
     else:
         # Unified Details view
         selected_food_item = food[(food['Index'] == st.session_state.selected_food['index']) &
@@ -188,12 +206,12 @@ def display_home_tab(collection, image_directory, food):
 
             if st.button("Go back"):
                 switch_to_search()  # Switch back to the Search view
-                st.rerun()  # Force rerun to update the view
+                st.session_state['selected_food'] = None# Clear the selected food to return to the search viewelse:
         else:
             st.error("The selected food item could not be found.")
             if st.button("Go back"):
                 switch_to_search()
-                st.rerun()
+                st.session_state['selected_food'] = None# Clear the selected food to return to the search view
 
 
 

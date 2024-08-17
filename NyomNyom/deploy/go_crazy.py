@@ -20,6 +20,67 @@ model = genai.GenerativeModel('gemini-1.5-flash')
 
 API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
 
+@st.cache_resource
+def generate_food_title_and_image(selected_ingredients):
+    # Generate food title
+    while True:
+        try:
+            # Generate food title
+            prompt =f"Can you give me a creative and roll of the tongue \
+                    food title with these ingredients {selected_ingredients} \
+                    give me just only the one food title"
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=1.5,
+                ),
+            )
+            filtered_text = ''.join([char for char in response.text if char.isalnum() or char.isspace()])
+            # st.header(f"{filtered_text}")
+            break
+        except Exception as e:
+            print(f"Attempt failed: {e}")
+            continue
+
+    
+    # Generate the image for the food/meal
+    while True:
+        try:
+            prompt = f"A delectable image of a meal/food with these ingredients: {selected_ingredients}"
+            headers = {"Authorization": "Bearer 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"}    
+            def query(payload):
+                response = requests.post(API_URL, headers=headers, json=payload)
+                return response.content
+        
+            st.spinner("Generating your delicious image...")
+            image_bytes = query({
+                "inputs": prompt,
+            })
+            # You can access the image with PIL.Image for example
+
+            image = Image.open(io.BytesIO(image_bytes))
+                
+            # Display the image in Streamlit
+            # st.image(image, use_column_width=True)
+            break
+        except Exception as e:
+            print(e)
+            continue
+            
+    
+    prompt =f"Just give me the prep time and instructions \
+            ,give me a somewhat realistic but not too long step by step  \
+            instructions to prepare this imaginary meal with ingredients {selected_ingredients} \
+            Do not show me the name of the food or anything else "
+    instructions = model.generate_content(
+        prompt,
+        generation_config=genai.types.GenerationConfig(
+            temperature=1.0,
+        ),
+    )
+
+    return filtered_text, image, instructions
+
 
 def display_crazy_tab(food):
     st.title("GO CRAY CRAY 🎉")
@@ -52,70 +113,16 @@ def display_crazy_tab(food):
             selected_ingredients.clear()
             print(f"Attempt failed: {e}")  
     
+    with st.spinner("Generating your delicious image..."):
+        food_title, image, instructions = generate_food_title_and_image(selected_ingredients)
 
-
-    while True:
-        try:
-            # Generate food title
-            prompt =f"Can you give me a creative and roll of the tongue \
-                    food title with these ingredients {selected_ingredients} \
-                    give me just only the one food title"
-            response = model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=1.5,
-                ),
-            )
-            filtered_text = ''.join([char for char in response.text if char.isalnum() or char.isspace()])
-            st.header(f"{filtered_text}")
-            break
-        except Exception as e:
-            print(f"Attempt failed: {e}")
-            continue
-
-
-
-
-    # Generate the image for the food/meal
-    while True:
-        try:
-            prompt = f"A delectable image of a meal/food with these ingredients: {selected_ingredients}"
-            headers = {"Authorization": "Bearer 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"}    
-            def query(payload):
-                response = requests.post(API_URL, headers=headers, json=payload)
-                return response.content
-        
-            st.spinner("Generating your delicious image...")
-            image_bytes = query({
-                "inputs": prompt,
-            })
-            # You can access the image with PIL.Image for example
-
-            image = Image.open(io.BytesIO(image_bytes))
-                
-            # Display the image in Streamlit
-            st.image(image, use_column_width=True)
-            break
-        except Exception as e:
-            print(e)
-            continue
-
+    st.header(f"{food_title}")
+    st.image(image, use_column_width=True)
 
     # Displays ingredients
     st.markdown("**Ingredients:**")
     for idx, ing in enumerate(selected_ingredients):
         st.markdown(f"{idx+1}. {ing}")
-    st.markdown("")
-    prompt =f"Just give me the prep time and instructions \
-            ,give me a somewhat realistic but not too long step by step  \
-            instructions to prepare this imaginary meal with ingredients {selected_ingredients} \
-            Do not show me the name of the food or anything else "
-    instructions = model.generate_content(
-        prompt,
-        generation_config=genai.types.GenerationConfig(
-            temperature=1.0,
-        ),
-    )
     st.markdown(instructions.text)
     # st.balloons()  # Add some fun with balloons# Add more crazy actions as needed
     # st.write("Stay tuned for more crazy features!")
