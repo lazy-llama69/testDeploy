@@ -59,8 +59,18 @@ def display_random_tab(food, image_directory):
         else:
             st.error(f"Image not found: {display_meal['Image_Name']}")
 
-        st.markdown(f"**Ingredients:** {display_meal['Ingredients']}")
-        st.markdown(f"**Instructions:** {display_meal['Instructions']}")
+        # st.markdown(f"**Ingredients:** {display_meal['Ingredients']}")
+        # st.markdown(f"**Instructions:** {display_meal['Instructions']}")
+
+        # Format ingredients and remove brackets
+        formatted_ingredients = format_ingredients(display_meal['Ingredients'])
+        st.markdown("<h3 style='font-size:24px;'>Ingredients:</h3>", unsafe_allow_html=True)
+        st.markdown(f"{formatted_ingredients}")
+        
+        # Format instructions
+        formatted_instructions = format_instructions(display_meal['Instructions'])
+        st.markdown("<h3 style='font-size:24px;'>Instructions:</h3>", unsafe_allow_html=True)
+        st.markdown(f"{formatted_instructions}")
 
         # Add to Favorites Button
         unique_key = f"add_fav_{display_meal['Index']}"
@@ -90,3 +100,29 @@ def remove_from_favorites(username, food_title, food_index):
         {"username": username},
         {"$pull": {"favorites": {"title": food_title, "index": food_index}}}  # $pull removes the item from the array
     )
+
+
+def format_ingredients(ingredients):
+    # Check if the ingredients are in string format with brackets
+    if isinstance(ingredients, str):
+        # Remove the square brackets and split the string into individual ingredients
+        ingredients = ingredients.strip("[]")  # Strip square brackets
+        ingredients = ingredients.split(", ")  # Split by comma and space
+        
+        # Further cleaning to remove quotes if necessary
+        ingredients = [ingredient.strip().strip("'").strip('"') for ingredient in ingredients]
+    
+    # Convert the list of ingredients to a formatted string with each ingredient on a new line
+    formatted_ingredients = "\n".join([f"- {ingredient.strip()}" for ingredient in ingredients])
+    
+    return formatted_ingredients
+
+
+def format_instructions(instructions):
+    # Split instructions based on a period followed by a space.
+    # This assumes each instruction ends with a period and a space.
+    instructions_list = instructions.split(". ")
+    # Re-add the period and create a numbered list of instructions.
+    formatted_instructions = "\n".join([f"{i+1}. {instruction.strip()}." for i, instruction in enumerate(instructions_list) if instruction])
+    return formatted_instructions
+

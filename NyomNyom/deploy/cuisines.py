@@ -1,20 +1,27 @@
 import streamlit as st
 import os
 import pandas as pd
-import hashlib
+import time 
+# from streamlit_extras.let_it_rain import rain
 
-# Define your cuisine keywords
 cuisines = {
-    "Korean": ["kimchi", "bulgogi", "bibimbap", "tteokbokki", "kimbap"],
-    "Italian": ["pasta", "pizza", "lasagna", "risotto", "gelato"],
-    "Mexican": ["taco", "burrito", "quesadilla", "enchilada", "guacamole"],
-    "Japanese": ["sushi", "ramen", "tempura", "sashimi", "udon"],
-    "Indian": ["curry", "biryani", "tandoori", "samosa", "dal"],
-    # Add more cuisines and their associated keywords here
+    "Korean 🇰🇷": ["korean", "kimchi", "bulgogi", "bibimbap", "tteokbokki", "kimbap", "gimbap", "galbi", "japchae", "soondubu", "mandu"],
+    "Italian 🇮🇹": ["italian", "pasta", "pizza", "lasagna", "risotto", "gelato", "gnocchi", "bruschetta", "tiramisu", "carbonara", "spaghetti"],
+    "Mexican 🇲🇽": ["mexican", "taco", "burrito", "quesadilla", "enchilada", "guacamole", "tamale", "salsa", "churro", "mole"],
+    "Japanese 🇯🇵": ["japanese", "sushi", "ramen", "tempura", "sashimi", "udon", "miso", "teriyaki", "gyoza", "matcha"],
+    "Indian 🇮🇳": ["indian", "curry", "biryani", "tandoori", "samosa", "dal", "naan", "rogan josh", "paneer", "masala"],
+    "Chinese 🇨🇳": ["chinese", "dumpling", "noodle", "sweet and sour", "kung pao", "fried rice", "spring roll", "dim sum", "baozi", "mapo tofu"],
+    "Thai 🇹🇭": ["thai", "pad thai", "green curry", "tom yum", "som tam", "satay", "massaman", "mango sticky rice", "larb", "red curry"],
+    "Vietnamese 🇻🇳": ["vietnamese", "pho", "banh mi", "spring roll", "bun cha", "banh xeo", "ca kho to", "goi cuon", "banh cuon", "nuoc cham"],
 }
+
 
 def display_cuisine_tab(collection, image_directory, food):
     st.title("Explore Food by Cuisine 🌏")
+    st.write("Embark on a global culinary adventure! Discover the vibrant flavors and traditions of the world’s top cuisines. From spicy Indian curries to savory Italian pastas, dive into a curated selection of iconic dishes. Select a cuisine to explore authentic recipes and satisfy your taste buds. Whether you're seeking new flavors or revisiting favorites, this is your gateway to a world of delicious possibilities. Bon appétit!")
+    
+    if 'selected_food' not in st.session_state:
+        st.session_state.selected_food = None
 
     # # Ensure 'Index' column is numeric
     # food['Index'] = pd.to_numeric(food['Index'], errors='coerce')
@@ -25,45 +32,55 @@ def display_cuisine_tab(collection, image_directory, food):
         keywords = cuisines[selected_cuisine]
         filtered_food = food[food['Title'].str.contains('|'.join(keywords), case=False, na=False)]
 
-        if not filtered_food.empty:
-            display_food_cards(filtered_food, image_directory)
-        else:
-            st.warning(f"No food items found for {selected_cuisine} cuisine.")
     
     # Unified Details view for the selected food item
-    if st.session_state.selected_food is None:
-        display_food_cards(collection, image_directory, food)
+        if st.session_state.selected_food is None:
+            display_food_cards(filtered_food, image_directory)
 
-    else: 
-        selected_food_item = food[(food['Index'] == st.session_state.selected_food['index']) &
-                              (food['Title'] == st.session_state.selected_food['title'])]
-        print("selected_food_item" + selected_food_item)
-        if not selected_food_item.empty:
-            food_item = selected_food_item.iloc[0]
+        else: 
+            selected_food_item = food[(food['Index'] == st.session_state.selected_food['index']) &
+                                (food['Title'] == st.session_state.selected_food['title'])]
+            # print("selected_food_item" + str(selected_food_item))
+            if not selected_food_item.empty:
+                food_item = selected_food_item.iloc[0]
 
-            image_path = os.path.join(image_directory, food_item['Image_Name'] + '.jpg')
+                image_path = os.path.join(image_directory, food_item['Image_Name'] + '.jpg')
 
-            if os.path.exists(image_path):
-                st.image(image_path, use_column_width=True)
+                if os.path.exists(image_path):
+                    st.image(image_path, use_column_width=True)
+                else:
+                    st.error(f"Image not found: {image_path}")
+
+                st.markdown(f"## {food_item['Title']}")
+                # st.markdown(f"**Ingredients:** {food_item['Ingredients']}")
+                # st.markdown(f"**Instructions:** {food_item['Instructions']}")
+                
+                # Format ingredients and remove brackets
+                formatted_ingredients = format_ingredients(food_item['Ingredients'])
+                st.markdown("<h3 style='font-size:24px;'>Ingredients:</h3>", unsafe_allow_html=True)
+                st.markdown(f"{formatted_ingredients}")
+                
+                # Format instructions
+                formatted_instructions = format_instructions(food_item['Instructions'])
+                st.markdown("<h3 style='font-size:24px;'>Instructions:</h3>", unsafe_allow_html=True)
+                st.markdown(f"{formatted_instructions}")
+
+                # Add to Favorites Button
+                # if st.button("Add to Favorites 🩷"):
+                if st.button("Add to Favorites 🩷", key=f"fav_{food_item['Title']}_{food_item['Index']}"):
+                    if st.session_state['logged_in_user']:
+                        username = st.session_state['logged_in_user']
+                        add_to_favorites(collection, username, food_item['Title'], food_item["Index"])
+                        st.success(f"{food_item['Title']} has been added to your favorites! 😉")
+                        time.sleep(2)
+                        st.rerun()
+
+                # if st.button("Go back"):
+                if st.button("Go back", key=f"go_back_{st.session_state.selected_food['index']}"):
+                    st.session_state.selected_food = None
+                    st.rerun()  # Force rerun to go back to the previous view
             else:
-                st.error(f"Image not found: {image_path}")
-
-            st.markdown(f"## {food_item['Title']}")
-            st.markdown(f"**Ingredients:** {food_item['Ingredients']}")
-            st.markdown(f"**Instructions:** {food_item['Instructions']}")
-
-            # Add to Favorites Button
-            if st.button("Add to Favorites 🩷"):
-                if st.session_state['logged_in_user']:
-                    username = st.session_state['logged_in_user']
-                    add_to_favorites(collection, username, food_item['Title'], food_item["Index"])
-                    st.success(f"{food_item['Title']} has been added to your favorites! 😉")
-
-            if st.button("Go back"):
-                st.session_state.selected_food = None
-                st.experimental_rerun()  # Force rerun to go back to the previous view
-        else:
-            st.error("The selected food item could not be found.")
+                st.error("The selected food item could not be found.")
 
 
 def display_food_cards(food_items, image_directory):
@@ -87,7 +104,7 @@ def display_food_cards(food_items, image_directory):
             st.markdown(f"**{row['Title'].strip()}**")
 
             # Clickable food title
-            unique_key = f"{row['Title']}_{row['Index']}"
+            unique_key = f"{row['Title']}_{row['Index']}_{n_row}"
             if st.button(row['Title'], key=unique_key):
                 switch_to_details(row['Title'], row['Index'])  # Pass title and index
                 st.rerun()  # Force rerun to update the view
@@ -110,36 +127,28 @@ def switch_to_details(food_title, food_index):
     print("changed state")
 
 
-# def display_food_details(collection, image_directory, food):
-    # selected_food_item = food[(food['Index'] == st.session_state.selected_food['index']) &
-    #                           (food['Title'] == st.session_state.selected_food['title'])]
+def format_ingredients(ingredients):
+    # Check if the ingredients are in string format with brackets
+    if isinstance(ingredients, str):
+        # Remove the square brackets and split the string into individual ingredients
+        ingredients = ingredients.strip("[]")  # Strip square brackets
+        ingredients = ingredients.split(", ")  # Split by comma and space
+        
+        # Further cleaning to remove quotes if necessary
+        ingredients = [ingredient.strip().strip("'").strip('"') for ingredient in ingredients]
+    
+    # Convert the list of ingredients to a formatted string with each ingredient on a new line
+    formatted_ingredients = "\n".join([f"- {ingredient.strip()}" for ingredient in ingredients])
+    
+    return formatted_ingredients
 
-    # if not selected_food_item.empty:
-    #     food_item = selected_food_item.iloc[0]
 
-    #     image_path = os.path.join(image_directory, food_item['Image_Name'] + '.jpg')
-
-    #     if os.path.exists(image_path):
-    #         st.image(image_path, use_column_width=True)
-    #     else:
-    #         st.error(f"Image not found: {image_path}")
-
-    #     st.markdown(f"## {food_item['Title']}")
-    #     st.markdown(f"**Ingredients:** {food_item['Ingredients']}")
-    #     st.markdown(f"**Instructions:** {food_item['Instructions']}")
-
-    #     # Add to Favorites Button
-    #     if st.button("Add to Favorites 🩷"):
-    #         if st.session_state['logged_in_user']:
-    #             username = st.session_state['logged_in_user']
-    #             add_to_favorites(collection, username, food_item['Title'], food_item["Index"])
-    #             st.success(f"{food_item['Title']} has been added to your favorites! 😉")
-
-    #     if st.button("Go back"):
-    #         st.session_state.selected_food = None
-    #         st.experimental_rerun()  # Force rerun to go back to the previous view
-    # else:
-    #     st.error("The selected food item could not be found.")
-
+def format_instructions(instructions):
+    # Split instructions based on a period followed by a space.
+    # This assumes each instruction ends with a period and a space.
+    instructions_list = instructions.split(". ")
+    # Re-add the period and create a numbered list of instructions.
+    formatted_instructions = "\n".join([f"{i+1}. {instruction.strip()}." for i, instruction in enumerate(instructions_list) if instruction])
+    return formatted_instructions
 
 
