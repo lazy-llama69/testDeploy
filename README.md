@@ -104,6 +104,19 @@ Gavin Pan
 - The image generation feature uses the [Stable Diffusion v1-5 model](https://huggingface.co/runwayml/stable-diffusion-v1-5) provided by Hugging Face. We thank them for offering such a comprehensive model that enhances the visual experience of this application.
 - The food dataset used in this project is the [Food Ingredients and Recipes Dataset with Images](https://www.kaggle.com/datasets/pes12017000148/food-ingredients-and-recipe-dataset-with-images) by Sakshi Goel, sourced from the Epicurious website. This dataset contains 13k images and rows, providing a robust foundation for meal recommendations and search functionality.
 
+## Important Note
+
+**Please be aware** that this project contains sensitive API keys for the following services:
+
+- **Gemini API**: Used for generating meal titles and instructions.
+- **Hugging Face API**: Used for generating meal images via the Stable Diffusion model.
+- **MongoDB Atlas**: Used for storing user information, including passwords and favorite meals.
+
+These keys are integral to the functioning of the application. **However, they should not be used for any purposes outside of this project.** Unauthorized use or abuse of these keys could lead to security risks, financial costs, or the disabling of the API access.
+
+If you fork or clone this repository, **please ensure to replace the API keys with your own,** or remove them entirely if not needed. 
+
+**Responsible usage of these resources is highly encouraged.**
 
 <p align="center">
 	Made with pure blood, sweat, tears, and :heart: </a>
