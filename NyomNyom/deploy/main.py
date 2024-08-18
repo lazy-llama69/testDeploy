@@ -41,8 +41,12 @@ def main():
     food = st.session_state.food_data
 
     # Directory where images are stored
-    image_directory = 'input/Food Images'
+    # Get the directory of the current script
+    current_dir = os.path.dirname(__file__)
 
+    # Construct the absolute path to the image directory
+    image_directory = os.path.join(current_dir, 'input', 'Food Images')
+    
     # Tabs
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Home", "Random", "Favourites", "GO CRAY CRAY", "Cuisines"])
     # logging.info(f"Tab options loaded in {time.time() - start_time:.2f} seconds")
